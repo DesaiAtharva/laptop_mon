@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Lint & Type Check ────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python linting tools
+        run: pip install ruff mypy
+
+      - name: Ruff lint (backend)
+        run: ruff check backend/ scripts/
+        if: always()
+
+      - name: Ruff lint (agent)
+        run: ruff check agent/
+        if: always()
+
+      - name: mypy strict (backend)
+        run: mypy --strict backend/
+        if: always()
+
+      - name: mypy strict (agent)
+        run: mypy --strict agent/
+        if: always()
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: ESLint
+        run: npx eslint --max-warnings 0 .
+        working-directory: frontend
+        if: always()
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+        working-directory: frontend
+        if: always()
+
+  # ── Unit Tests ───────────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt
+
+      - name: Install agent deps
+        run: pip install -r agent/requirements.txt
+
+      - name: Run backend tests
+        run: pytest backend/ -v --tb=short --cov=backend --cov-report=xml --cov-fail-under=80
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+
+      - name: Run agent tests (fake adapter)
+        run: pytest agent/ -v --tb=short --cov=agent --cov-report=xml --cov-fail-under=80
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Frontend unit tests
+        run: npx vitest run --coverage
+        working-directory: frontend
+
+  # ── Migration Check ──────────────────────────────────────────────────────────
+  migration-check:
+    name: Migration Check
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: laptop_mon_test
+          MYSQL_USER: laptop_mon
+          MYSQL_PASSWORD: laptop_mon_test
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u laptop_mon -plaptop_mon_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+        ports:
+          - 3306:3306
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install backend deps
+        run: pip install -r backend/requirements.txt
+
+      - name: Run migrations (empty DB)
+        run: python manage.py migrate --check
+        working-directory: backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_DATABASE: laptop_mon_test
+          MYSQL_USER: laptop_mon
+          MYSQL_PASSWORD: laptop_mon_test
+
+      - name: Check for destructive migrations
+        run: python scripts/check_migrations.py
+        if: always()
+
+  # ── Dependency & Secret Scan ─────────────────────────────────────────────────
+  security-scan:
+    name: Dependency & Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install safety
+        run: pip install safety
+
+      - name: Python dependency scan (backend)
+        run: safety check -r backend/requirements.txt
+        if: always()
+
+      - name: Python dependency scan (agent)
+        run: safety check -r agent/requirements.txt
+        if: always()
+
+      - name: Secret scan (detect-secrets)
+        uses: reviewdog/action-detect-secrets@v0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-check
+        if: always()
+
+  # ── Traceability Check ────────────────────────────────────────────────────────
+  traceability:
+    name: Traceability Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run traceability check
+        run: python scripts/check_traceability.py
+
+  # ── Bundle Size Check ─────────────────────────────────────────────────────────
+  bundle-size:
+    name: Frontend Bundle Size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Check bundle size
+        run: node scripts/check-bundle-size.js
+        working-directory: frontend
