@@ -53,13 +53,13 @@
 | REQ-5-6 | Crash loop MUST have a circuit breaker with backoff | §5.3 | P5 | | | todo |
 | REQ-5-7 | Corrupt SQLite MUST be quarantined; valid records recovered | §5.3 | P5 | | | todo |
 | REQ-6-1 | Agent MUST delete local data ONLY after confirmed acceptance | §6.1 | P5 | | | todo |
-| REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | | | todo |
+| REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | | | todo |
 | REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | backend/apps/common/models.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-7-2 | MUST use expand-then-contract schema changes | §7.1 | P1–P12 | | | todo |
 | REQ-7-3 | CI MUST fail on destructive migrations without approved marker | §7.1 | P1 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| REQ-7-4 | Raw accepted events MUST be immutable | §7.2 | P2 | | | todo |
-| REQ-8-1 | All API errors MUST return stable machine-readable codes with correlation ID | §8.1 | P2 | | | todo |
+| REQ-7-4 | Raw accepted events MUST be immutable | §7.2 | P2 | backend/apps/ingestion/models.py | tests/test_p2_devices_policies_ingestion.py | done |
+| REQ-8-1 | All API errors MUST return stable machine-readable codes with correlation ID | §8.1 | P2 | backend/apps/common/exceptions.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-8-2 | No error response MAY leak information about other tenants | §8.1 | P1, P2 | backend/apps/common/exceptions.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | backend/apps/rbac/permissions.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1 | tests/test_p1_tenancy_rbac_audit.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -76,7 +76,7 @@
 | REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | | | todo |
 | REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | | | todo |
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | | | todo |
-| REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | | | todo |
+| REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | | | todo |
 | REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | | | todo |
 | REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | | | todo |
@@ -96,8 +96,8 @@
 | ID | Edge Case | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
 | E01 | No internet at startup | §13 | P5 | | | todo |
-| E02 | Connection lost mid-upload | §13 | P2, P5 | | | todo |
-| E03 | Batch committed but response lost | §13 | P2, P5 | | | todo |
+| E02 | Connection lost mid-upload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E03 | Batch committed but response lost | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E04 | DNS failure or captive portal | §13 | P5 | | | todo |
 | E05 | Proxy, VPN or firewall blocks API | §13 | P5 | | | todo |
 | E06 | TLS certificate invalid or expired | §13 | P5, P10 | | | todo |
@@ -110,31 +110,31 @@
 | E13 | Uninstall with pending data | §13 | P5, P7 | | | todo |
 | E14 | OS update or reboot | §13 | P7, P11 | | | todo |
 | E15 | Agent update interrupted | §13 | P7 | | | todo |
-| E16 | Agent and server version mismatch | §13 | P2, P7 | | | todo |
+| E16 | Agent and server version mismatch | §13 | P2, P7 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E17 | Local disk full | §13 | P5 | | | todo |
 | E18 | Local queue reaches quota | §13 | P5 | | | todo |
 | E19 | SQLite corrupt | §13 | P5 | | | todo |
 | E20 | Screenshot file without DB row | §13 | P5 | | | todo |
 | E21 | DB row without screenshot file | §13 | P5 | | | todo |
 | E22 | Encryption key unavailable | §13 | P5, P12 | | | todo |
-| E23 | Device reimaged or profile deleted | §13 | P2, P5 | | | todo |
-| E24 | Device stolen | §13 | P2 | | | todo |
-| E25 | Device clock far off | §13 | P2, P4, P5 | | | todo |
+| E23 | Device reimaged or profile deleted | §13 | P2, P5 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E25 | Device clock far off | §13 | P2, P4, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E26 | Clock changes while running | §13 | P4, P5 | | | todo |
 | E27 | Timezone changes | §13 | P4, P5 | | | todo |
 | E28 | DST 23 or 25 hour day | §13 | P4 | | | todo |
 | E29 | Duplicate timestamps | §13 | P4 | | | todo |
 | E30 | Events arrive out of order | §13 | P4 | | | todo |
-| E31 | Duplicate event ID, same payload | §13 | P2 | | | todo |
-| E32 | Duplicate event ID, different payload | §13 | P2 | | | todo |
-| E33 | Unknown event type | §13 | P2 | | | todo |
-| E34 | Oversized batch | §13 | P2, P5 | | | todo |
-| E35 | Rate limit or overload | §13 | P2, P5 | | | todo |
-| E36 | Partial batch acceptance | §13 | P2, P5 | | | todo |
-| E37 | Policy changed while offline | §13 | P2, P5 | | | todo |
-| E38 | Device revoked while offline | §13 | P2, P5 | | | todo |
-| E39 | Enrollment token reused or expired | §13 | P2 | | | todo |
-| E40 | Device credential leaked | §13 | P2 | | | todo |
+| E31 | Duplicate event ID, same payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E32 | Duplicate event ID, different payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E33 | Unknown event type | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E34 | Oversized batch | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E35 | Rate limit or overload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E36 | Partial batch acceptance | §13 | P2, P5 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E37 | Policy changed while offline | §13 | P2, P5 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E38 | Device revoked while offline | §13 | P2, P5 | backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E39 | Enrollment token reused or expired | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E40 | Device credential leaked | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E41 | Employee moved to another team | §13 | P1, P8 | backend/apps/tenancy/views.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E42 | Employee leaves company | §13 | P1, P9 | backend/apps/tenancy/models.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -179,7 +179,7 @@
 | E82 | Export exceeds limits | §13 | P4 | | | todo |
 | E83 | Invitation email delivery fails | §13 | P9 | | | todo |
 | E84 | Payment webhook duplicated or out of order | §13 | P9 | | | todo |
-| E85 | Subscription limit reached | §13 | P2, P9 | | | todo |
+| E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E86 | Backup restore needed | §13 | P10 | | | todo |
 | E87 | Region or provider outage | §13 | P10 | | | todo |
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | | | todo |
@@ -192,8 +192,8 @@
 | E95 | Very large multi-monitor capture | §13 | P6 | | | todo |
 | E96 | Battery saver or CPU pressure | §13 | P5 | | | todo |
 | E97 | Offline beyond retention or quota | §13 | P5 | | | todo |
-| E98 | User changes OS account | §13 | P2, P5, P6 | | | todo |
-| E99 | Concurrent admin policy edits | §13 | P2, P8 | | | todo |
+| E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E99 | Concurrent admin policy edits | §13 | P2, P8 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E100 | Support staff accesses customer data | §13 | P1 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 
 ---

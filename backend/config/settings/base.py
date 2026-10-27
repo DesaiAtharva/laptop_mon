@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     "apps.rbac",
     "apps.audit",
     "apps.support_access",
+    "apps.devices",
+    "apps.policies",
+    "apps.ingestion",
 ]
 
 MIDDLEWARE = [
@@ -144,6 +147,7 @@ CACHES = {
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "apps.accounts.authentication.BearerTokenAuthentication",
+        "apps.devices.authentication.DeviceBearerAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [

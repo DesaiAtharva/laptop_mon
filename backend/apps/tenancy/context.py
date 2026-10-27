@@ -11,6 +11,7 @@ from apps.tenancy.models import Membership, MembershipStatus, TenantStatus
 EXEMPT_PREFIXES = (
     "/api/auth/",
     "/api/me/tenants",
+    "/api/agent/",
     "/api/support-access/request",
     "/static/",
 )

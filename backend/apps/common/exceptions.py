@@ -13,7 +13,6 @@ from rest_framework.exceptions import (
     ValidationError,
 )
 from rest_framework.response import Response
-from rest_framework.views import exception_handler
 from apps.common.middleware import get_current_correlation_id
 
 logger = logging.getLogger(__name__)
@@ -43,6 +42,23 @@ class MFARequired(APIException):
     default_code = "mfa_required"
 
 
+class PayloadTooLarge(APIException):
+    status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    default_detail = "Batch payload exceeds maximum size limit."
+    default_code = "payload_too_large"
+
+
+class RateLimitedException(APIException):
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    default_detail = "Ingestion rate limit exceeded. Please back off."
+    default_code = "rate_limited"
+
+    def __init__(self, detail: Optional[str] = None, retry_after: int = 60) -> None:
+        super().__init__(detail=detail)
+        self.retry_after = retry_after
+
+
+
 def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optional[Response]:
     """DRF exception handler formatting all error responses per §8.1.
 
@@ -54,6 +70,8 @@ def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optiona
       "correlation_id": "uuid"
     }
     """
+    from rest_framework.views import exception_handler
+
     response = exception_handler(exc, context)
     correlation_id = get_current_correlation_id()
 
@@ -108,7 +126,7 @@ def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optiona
         if not isinstance(message, str):
             message = str(message)
     elif isinstance(exc, APIException):
-        code = getattr(exc, "default_code", "api_error")
+        code = getattr(exc.detail, "code", None) or getattr(exc, "code", None) or getattr(exc, "default_code", "api_error")
         message = getattr(exc, "detail", str(exc))
         if not isinstance(message, str):
             message = str(message)
@@ -123,4 +141,6 @@ def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optiona
     }
 
     response.data = formatted_data
+    if isinstance(exc, RateLimitedException):
+        response["Retry-After"] = str(exc.retry_after)
     return response
