@@ -1,0 +1,13 @@
+"""Audit middleware."""
+from typing import Callable
+from django.http import HttpRequest, HttpResponse
+
+
+class AuditLogMiddleware:
+    """Pass-through middleware reserved for request-level audit signals."""
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        return self.get_response(request)

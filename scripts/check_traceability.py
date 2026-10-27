@@ -228,7 +228,7 @@ def print_summary(rows: list[Row]) -> None:
     print(f"\n  Total rows: {len(rows)}")
 
     # Edge case coverage
-    ec_rows = [r for r in rows if re.match(r'^E\d{2}$', r.id)]
+    ec_rows = [r for r in rows if re.match(r'^E\d{2,3}$', r.id)]
     done_ec = [r for r in ec_rows if r.status in FINAL_REQUIRED_STATUSES]
     print("\n-- Edge case coverage ----------------------------------------")
     print(f"  {len(done_ec)}/{len(ec_rows)} edge cases done or limitation")

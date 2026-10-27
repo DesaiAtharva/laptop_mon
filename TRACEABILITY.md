@@ -55,14 +55,14 @@
 | REQ-6-1 | Agent MUST delete local data ONLY after confirmed acceptance | §6.1 | P5 | | | todo |
 | REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | | | todo |
 | REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | | | todo |
-| REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | | | todo |
+| REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | backend/apps/common/models.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-7-2 | MUST use expand-then-contract schema changes | §7.1 | P1–P12 | | | todo |
-| REQ-7-3 | CI MUST fail on destructive migrations without approved marker | §7.1 | P1 | | | todo |
+| REQ-7-3 | CI MUST fail on destructive migrations without approved marker | §7.1 | P1 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-7-4 | Raw accepted events MUST be immutable | §7.2 | P2 | | | todo |
 | REQ-8-1 | All API errors MUST return stable machine-readable codes with correlation ID | §8.1 | P2 | | | todo |
-| REQ-8-2 | No error response MAY leak information about other tenants | §8.1 | P1, P2 | | | todo |
-| REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | | | todo |
-| REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1 | | | todo |
+| REQ-8-2 | No error response MAY leak information about other tenants | §8.1 | P1, P2 | backend/apps/common/exceptions.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | backend/apps/rbac/permissions.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1 | tests/test_p1_tenancy_rbac_audit.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-9-1 | Timeline reconstruction MUST be deterministic | §9.1 | P4 | | | todo |
 | REQ-9-2 | No overlapping intervals per device | §9.1 | P4 | | | todo |
 | REQ-9-3 | Gaps MUST be explicit unknowns — never filled or counted as activity | §9.1 | P4 | | | todo |
@@ -72,7 +72,7 @@
 | REQ-10-2 | Object keys MUST be tenant-scoped and non-guessable | §10.2 | P3 | | | todo |
 | REQ-10-3 | Every upload MUST be treated as untrusted (strict decode, type/dimension limits) | §10.2 | P3 | | | todo |
 | REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3 | | | todo |
-| REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | | | todo |
+| REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | backend/apps/audit/models.py, backend/apps/audit/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | | | todo |
 | REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | | | todo |
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | | | todo |
@@ -135,14 +135,14 @@
 | E38 | Device revoked while offline | §13 | P2, P5 | | | todo |
 | E39 | Enrollment token reused or expired | §13 | P2 | | | todo |
 | E40 | Device credential leaked | §13 | P2 | | | todo |
-| E41 | Employee moved to another team | §13 | P1, P8 | | | todo |
-| E42 | Employee leaves company | §13 | P1, P9 | | | todo |
-| E43 | Tenant suspended | §13 | P1, P9 | | | todo |
-| E44 | Tenant deleted | §13 | P1, P9 | | | todo |
-| E45 | Cross-tenant object ID guessed | §13 | P1 | | | todo |
-| E46 | User in multiple tenants | §13 | P1, P8 | | | todo |
-| E47 | Manager changes teams | §13 | P1, P8 | | | todo |
-| E48 | Admin account compromised | §13 | P1, P10 | | | todo |
+| E41 | Employee moved to another team | §13 | P1, P8 | backend/apps/tenancy/views.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E42 | Employee leaves company | §13 | P1, P9 | backend/apps/tenancy/models.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E44 | Tenant deleted | §13 | P1, P9 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E45 | Cross-tenant object ID guessed | §13 | P1 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E47 | Manager changes teams | §13 | P1, P8 | backend/apps/rbac/permissions.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E48 | Admin account compromised | §13 | P1, P10 | backend/apps/accounts/models.py, backend/apps/accounts/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E49 | Screenshot view URL leaked | §13 | P3 | | | todo |
 | E50 | Malicious uploaded file | §13 | P3 | | | todo |
 | E51 | Screenshot upload partially completes | §13 | P3 | | | todo |
@@ -172,9 +172,9 @@
 | E75 | Worker retries same job | §13 | P4 | | | todo |
 | E76 | Celery or Redis unavailable | §13 | P4 | | | todo |
 | E77 | MySQL failover or deadlock | §13 | P4, P10 | | | todo |
-| E78 | Database migration fails | §13 | P1, P10 | | | todo |
+| E78 | Database migration fails | §13 | P1, P10 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E79 | Connection pool exhausted | §13 | P4 | | | todo |
-| E80 | Stale or cross-tenant cache | §13 | P1, P10 | | | todo |
+| E80 | Stale or cross-tenant cache | §13 | P1, P10 | backend/apps/common/cache.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E81 | Report query too large | §13 | P4 | | | todo |
 | E82 | Export exceeds limits | §13 | P4 | | | todo |
 | E83 | Invitation email delivery fails | §13 | P9 | | | todo |
@@ -194,7 +194,7 @@
 | E97 | Offline beyond retention or quota | §13 | P5 | | | todo |
 | E98 | User changes OS account | §13 | P2, P5, P6 | | | todo |
 | E99 | Concurrent admin policy edits | §13 | P2, P8 | | | todo |
-| E100 | Support staff accesses customer data | §13 | P1 | | | todo |
+| E100 | Support staff accesses customer data | §13 | P1 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 
 ---
 
