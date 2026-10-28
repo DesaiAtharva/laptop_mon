@@ -1,7 +1,6 @@
 """Object storage abstraction and backends strictly adhering to §10.2 and REQ-10-1/REQ-10-2."""
 from __future__ import annotations
-
-import base64
+ 
 import datetime
 import hashlib
 import hmac

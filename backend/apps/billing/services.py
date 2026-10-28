@@ -18,7 +18,6 @@ from apps.billing.models import (
     Plan,
     Subscription,
     SubscriptionStatus,
-    UsageRecord,
     WebhookEvent,
 )
 from apps.devices.models import Device, DeviceStatus

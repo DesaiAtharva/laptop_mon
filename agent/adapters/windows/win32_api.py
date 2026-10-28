@@ -193,7 +193,7 @@ class Win32Platform:
             ctypes.c_double,
         )
 
-        def callback(h_monitor, hdc_monitor, lprc_monitor, dw_data):
+        def callback(h_monitor, _hdc_monitor, _lprc_monitor, _dw_data):
             info = MONITORINFOEXW()
             info.cbSize = ctypes.sizeof(MONITORINFOEXW)
             if self.user32.GetMonitorInfoW(h_monitor, ctypes.byref(info)):

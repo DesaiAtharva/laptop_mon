@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from rest_framework import serializers
-from apps.billing.models import Plan, Subscription, UsageRecord
+from apps.billing.models import Plan, Subscription
 
 
 class PlanSerializer(serializers.ModelSerializer):

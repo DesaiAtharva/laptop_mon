@@ -15,9 +15,7 @@ from agent.adapters.base import (
     ForegroundAppEvent,
     OSAdapterProtocol,
     PermissionStatus,
-    PowerEvent,
     PowerEventType,
-    SessionEvent,
     SessionEventType,
     SessionType,
 )
