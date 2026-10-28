@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.ingestion",
     "apps.screenshots",
     "apps.analytics",
+    "apps.releases",
 ]
 
 MIDDLEWARE = [

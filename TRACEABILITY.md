@@ -42,9 +42,9 @@
 | REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | agent/core/scheduler.py, agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | agent/core/status.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | REQ-4-4 | Monitoring state MUST remain discoverable when UI is closed | §4.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
-| REQ-4-5 | Updater MUST verify hash and signature before applying update | §4.4 | P7 | | | todo |
-| REQ-4-6 | Updater MUST rollback on any failure | §4.4 | P7 | | | todo |
-| REQ-4-7 | Updater MUST NOT update during shutdown | §4.4 | P7 | | | todo |
+| REQ-4-5 | Updater MUST verify hash and signature before applying update | §4.4 | P7 | agent/core/updater.py, agent/packaging/signing.py | tests/test_p7_updater_packaging.py | done |
+| REQ-4-6 | Updater MUST rollback on any failure | §4.4 | P7 | agent/core/updater.py | tests/test_p7_updater_packaging.py | done |
+| REQ-4-7 | Updater MUST NOT update during shutdown | §4.4 | P7 | agent/core/updater.py | tests/test_p7_updater_packaging.py | done |
 | REQ-5-1 | Agent MUST start offline under a valid cached policy | §5.1 | P5 | agent/core/policy.py | tests/test_p5_agent_core.py | done |
 | REQ-5-2 | Agent MUST drop screenshots before event journal when space is tight | §5.1 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | REQ-5-3 | Agent MUST write explicit gap events — never silently delete data | §5.1 | P5 | agent/core/journal.py, agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
@@ -83,8 +83,8 @@
 | REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | | | todo |
 | REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | | | todo |
 | REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | | | todo |
-| REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | | | todo |
-| REQ-15-2 | Uninstaller MUST follow pending-data policy and NEVER silently delete unsynced data | §15.1 | P7 | | | todo |
+| REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | agent/installer/install.py, agent/packaging/build_windows.py | tests/test_p7_updater_packaging.py | done |
+| REQ-15-2 | Uninstaller MUST follow pending-data policy and NEVER silently delete unsynced data | §15.1 | P7 | agent/installer/uninstall.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-3 | Per-tenant quotas MUST be enforced server-side | §15.3 | P9 | | | todo |
 | REQ-17-1 | All checklist items in §17.1 MUST have evidence links | §17.1 | T8 | | | todo |
 | REQ-17-2 | All open decisions in §17.2 MUST be reviewed at release | §17.2 | T8 | | | todo |
@@ -108,8 +108,8 @@
 | E11 | UI closed, agent continues | §13 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
 | E12 | Employee explicitly exits monitoring | §13 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
 | E13 | Uninstall with pending data | §13 | P5, P7 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
-| E14 | OS update or reboot | §13 | P7, P11 | | | todo |
-| E15 | Agent update interrupted | §13 | P7 | | | todo |
+| E14 | OS update or reboot | §13 | P7, P11 | agent/core/updater.py | tests/test_p7_updater_packaging.py | done |
+| E15 | Agent update interrupted | §13 | P7 | agent/core/updater.py | tests/test_p7_updater_packaging.py | done |
 | E16 | Agent and server version mismatch | §13 | P2, P7 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E17 | Local disk full | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | E18 | Local queue reaches quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
@@ -185,7 +185,7 @@
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
 | E89 | False positive or employee dispute | §13 | P8 | | | todo |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E91 | Untrusted local administrator tampers | §13 | P7 | | | todo |
+| E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |
 | E93 | Monotonic clock reset after reboot | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
 | E94 | Compression differs by OS | §13 | P5 | | | todo |

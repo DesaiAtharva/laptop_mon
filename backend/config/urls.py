@@ -11,4 +11,5 @@ urlpatterns = [
     path("api/support-access/", include("apps.support_access.urls")),
     path("api/", include("apps.screenshots.urls")),
     path("api/", include("apps.analytics.urls")),
+    path("api/", include("apps.releases.urls")),
 ]
