@@ -13,12 +13,9 @@ from apps.tenancy.models import Tenant
 
 
 def check_subscription_seat_limit(tenant: Tenant) -> None:
-    """Subscription seat limit check hook (E85, detailed billing integration in P9)."""
-    # Enforce default trial/seat cap of e.g. 50 devices per tenant if not on enterprise plan
-    active_device_count = Device.objects.filter(tenant=tenant, status=DeviceStatus.ACTIVE).count()
-    max_seats = 50  # Hook parameter
-    if active_device_count >= max_seats:
-        raise ValidationError({"detail": "Organization subscription device limit reached. Please upgrade plan."})
+    """Subscription seat limit check hook (REQ-15-3, E85)."""
+    from apps.billing.services import enforce_subscription_seat_limit
+    enforce_subscription_seat_limit(tenant)
 
 
 @transaction.atomic

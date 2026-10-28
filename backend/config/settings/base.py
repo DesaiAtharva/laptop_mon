@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.screenshots",
     "apps.analytics",
     "apps.releases",
+    "apps.billing",
 ]
 
 MIDDLEWARE = [

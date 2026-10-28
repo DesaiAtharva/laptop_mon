@@ -85,7 +85,7 @@
 | REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | | | todo |
 | REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | agent/installer/install.py, agent/packaging/build_windows.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-2 | Uninstaller MUST follow pending-data policy and NEVER silently delete unsynced data | §15.1 | P7 | agent/installer/uninstall.py | tests/test_p7_updater_packaging.py | done |
-| REQ-15-3 | Per-tenant quotas MUST be enforced server-side | §15.3 | P9 | | | todo |
+| REQ-15-3 | Per-tenant quotas MUST be enforced server-side | §15.3 | P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p9_billing_and_lifecycle.py | done |
 | REQ-17-1 | All checklist items in §17.1 MUST have evidence links | §17.1 | T8 | | | todo |
 | REQ-17-2 | All open decisions in §17.2 MUST be reviewed at release | §17.2 | T8 | | | todo |
 
@@ -137,8 +137,8 @@
 | E40 | Device credential leaked | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E41 | Employee moved to another team | §13 | P1, P8 | backend/apps/tenancy/views.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E42 | Employee leaves company | §13 | P1, P9 | backend/apps/tenancy/models.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E44 | Tenant deleted | §13 | P1, P9 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
+| E44 | Tenant deleted | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
 | E45 | Cross-tenant object ID guessed | §13 | P1 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E47 | Manager changes teams | §13 | P1, P8 | backend/apps/rbac/permissions.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -177,9 +177,9 @@
 | E80 | Stale or cross-tenant cache | §13 | P1, P10 | backend/apps/common/cache.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E81 | Report query too large | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E82 | Export exceeds limits | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E83 | Invitation email delivery fails | §13 | P9 | | | todo |
-| E84 | Payment webhook duplicated or out of order | §13 | P9 | | | todo |
-| E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E83 | Invitation email delivery fails | §13 | P9 | backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p9_billing_and_lifecycle.py | done |
+| E84 | Payment webhook duplicated or out of order | §13 | P9 | backend/apps/billing/services.py, backend/apps/billing/views.py | tests/test_p9_billing_and_lifecycle.py | done |
+| E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p9_billing_and_lifecycle.py | done |
 | E86 | Backup restore needed | §13 | P10 | | | todo |
 | E87 | Region or provider outage | §13 | P10 | | | todo |
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |

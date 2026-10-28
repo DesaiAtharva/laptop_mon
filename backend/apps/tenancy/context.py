@@ -73,7 +73,8 @@ def resolve_tenant_context(request: HttpRequest, user: Any) -> tuple[Any, Any]:
     if membership:
         tenant = membership.tenant
         if tenant.status == TenantStatus.SUSPENDED:
-            raise TenantSuspended("Tenant organization is currently suspended.")
+            if not (path.endswith("/suspend") or path.endswith("/suspend/") or getattr(user, "is_superuser", False)):
+                raise TenantSuspended("Tenant organization is currently suspended.")
         if tenant.status == TenantStatus.DELETING:
             raise TenantDeleted("Tenant organization not found or is being deleted.")
 

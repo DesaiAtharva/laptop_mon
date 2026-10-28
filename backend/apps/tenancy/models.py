@@ -237,6 +237,14 @@ class Invitation(TenantModel):
     )
     token_hash = models.CharField(max_length=64, unique=True)
     expires_at = models.DateTimeField(db_index=True)
+    delivery_status = models.CharField(
+        max_length=32,
+        default="pending",
+        db_index=True,
+        help_text="Email delivery status: pending, sent, failed (E83).",
+    )
+    delivery_error = models.TextField(blank=True, default="")
+    last_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "invitations"

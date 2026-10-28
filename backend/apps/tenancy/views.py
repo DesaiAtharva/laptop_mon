@@ -29,7 +29,15 @@ from apps.tenancy.serializers import (
     MembershipUpdateSerializer,
     TenantSerializer,
 )
-from apps.tenancy.services import change_membership_role, change_membership_team
+from apps.tenancy.services import (
+    accept_invitation,
+    change_membership_role,
+    change_membership_team,
+    delete_tenant_cascade,
+    reactivate_tenant,
+    send_invitation_email,
+    suspend_tenant,
+)
 
 
 class MeTenantsView(APIView):
@@ -170,13 +178,20 @@ class TenantInvitationsView(APIView):
             role=role,
         )
 
+        # Attempt to deliver email, catching delivery errors safely (E83)
+        send_invitation_email(invitation, raw_token)
+
         log_audit_event(
             tenant=request.tenant,
             actor=request.user,
             action="invitation.created",
             resource_type="invitation",
             resource_id=str(invitation.id),
-            metadata={"email": email, "role": role},
+            metadata={
+                "email": email,
+                "role": role,
+                "delivery_status": invitation.delivery_status,
+            },
             request=request,
         )
 
@@ -184,9 +199,65 @@ class TenantInvitationsView(APIView):
             {
                 "invitation": InvitationSerializer(invitation).data,
                 "invitation_token": raw_token,
+                "delivery_status": invitation.delivery_status,
+                "delivery_error": invitation.delivery_error,
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class AcceptInvitationView(APIView):
+    """Accept an invitation token (§8.2)."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        token = request.data.get("token", "").strip()
+        if not token:
+            raise ValidationError({"token": ["Token is required."]})
+
+        membership = accept_invitation(token, request.user)
+        return Response(
+            {
+                "membership_id": str(membership.id),
+                "tenant_id": str(membership.tenant_id),
+                "role": membership.role,
+                "status": membership.status,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class TenantSuspensionView(APIView):
+    """Suspend an organization, freezing agent capture and logins (E43)."""
+
+    permission_classes = [IsOrgAdmin]
+
+    def post(self, request: Request, tenant_id: uuid.UUID, *args: Any, **kwargs: Any) -> Response:
+        if request.tenant.id != tenant_id:
+            raise NotFound("Tenant not found.")
+
+        active = request.data.get("active", False)
+        if active:
+            reactivate_tenant(request.tenant, actor=request.user)
+            return Response({"status": "active", "tenant_id": str(tenant_id)}, status=status.HTTP_200_OK)
+
+        reason = request.data.get("reason", "Suspended by Administrator")
+        suspend_tenant(request.tenant, reason=reason, actor=request.user)
+        return Response({"status": "suspended", "tenant_id": str(tenant_id)}, status=status.HTTP_200_OK)
+
+
+class TenantDeletionView(APIView):
+    """Initiate verified cascade deletion of a tenant (E44)."""
+
+    permission_classes = [IsOrgAdmin]
+
+    def delete(self, request: Request, tenant_id: uuid.UUID, *args: Any, **kwargs: Any) -> Response:
+        if request.tenant.id != tenant_id:
+            raise NotFound("Tenant not found.")
+
+        res = delete_tenant_cascade(request.tenant, actor=request.user)
+        return Response(res, status=status.HTTP_200_OK)
 
 
 class TenantMemberDetailView(APIView):
