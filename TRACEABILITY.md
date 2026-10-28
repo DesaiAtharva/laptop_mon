@@ -78,7 +78,7 @@
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10, T5 | docs/threat-model.md | tests/test_p10_security_observability_dr.py, tests/test_t5_security_tenant_isolation.py | done |
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | backend/apps/devices/alerts.py | tests/test_p10_security_observability_dr.py | done |
-| REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | | | todo |
+| REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | docs/test-evidence/edge-cases.md | tests/ | done |
 | REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | .coveragerc, backend, agent/core | tests/test_t1_coverage_baseline.py, docs/test-evidence/T1.md | done |
 | REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | backend/apps/tenancy/context.py, backend/apps/ingestion/services.py, backend/apps/analytics/timeline.py, agent/core/journal.py, agent/core/spool.py | tests/test_t1_coverage_baseline.py | done |
 | REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | | | todo |
@@ -209,7 +209,7 @@
 |---|---|---|---|---|
 | AC-1 | All test suites pass (T1–T7) | T8 | | todo |
 | AC-2 | check_traceability.py --final passes | T8 | | todo |
-| AC-3 | Every E01–E100 has code and passing test or documented limitation | T7 | | todo |
+| AC-3 | Every E01–E100 has code and passing test or documented limitation | T7 | docs/test-evidence/edge-cases.md | done |
 | AC-4 | Agent footprint within budget (≤ 20% regression from baseline) | T6 | docs/test-evidence/T6.md, docs/perf/BASELINE.md | done |
 | AC-5 | No cross-tenant data leak | T5 | docs/test-evidence/T5.md | done |
 | AC-6 | Restore drill completed with RTO/RPO evidence | T4, T8 | | todo |
