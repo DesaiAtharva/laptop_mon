@@ -27,9 +27,9 @@
 | REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12 | | | todo |
 | REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12 | | | todo |
 | REQ-1-10 | NEVER perform arbitrary remote command execution | §1.3 | P0–P12 | | | todo |
-| REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8 | | | todo |
+| REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
 | REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
-| REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8 | | | todo |
+| REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8 | backend/apps/analytics/views.py, frontend/src/components/ManagerTeamView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
 | REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1 | | | todo |
 | REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1 | | | todo |
@@ -74,7 +74,7 @@
 | REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | backend/apps/audit/models.py, backend/apps/audit/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | | | todo |
+| REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | | | todo |
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | | | todo |
@@ -183,7 +183,7 @@
 | E86 | Backup restore needed | §13 | P10 | | | todo |
 | E87 | Region or provider outage | §13 | P10 | | | todo |
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
-| E89 | False positive or employee dispute | §13 | P8 | | | todo |
+| E89 | False positive or employee dispute | §13 | P8 | backend/apps/analytics/models.py, backend/apps/analytics/views.py, frontend/src/components/DisputeModal.tsx | tests/test_p8_dashboard_and_disputes.py | done |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |

@@ -206,3 +206,64 @@ class DataExport(TenantModel):
     @property
     def is_expired(self) -> bool:
         return timezone.now() > self.expires_at
+
+
+class DisputeStatus(models.TextChoices):
+    OPEN = "open", "Open"
+    UNDER_REVIEW = "under_review", "Under Review"
+    RESOLVED = "resolved", "Resolved"
+    REJECTED = "rejected", "Rejected"
+
+
+class Dispute(TenantModel):
+    """Employee activity and classification dispute model strictly adhering to §11.3 and E89."""
+
+    membership = models.ForeignKey(
+        "tenancy.Membership",
+        on_delete=models.CASCADE,
+        related_name="disputes",
+        db_index=True,
+    )
+    interval = models.ForeignKey(
+        AppUsageInterval,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="disputes",
+        db_index=True,
+    )
+    target_app = models.CharField(max_length=255, blank=True, default="")
+    target_date = models.DateField(null=True, blank=True, db_index=True)
+    reason = models.TextField(help_text="Employee explanation or dispute rationale (E89).")
+    desired_classification = models.CharField(
+        max_length=32,
+        choices=AppClassification.choices,
+        blank=True,
+        default="",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=DisputeStatus.choices,
+        default=DisputeStatus.OPEN,
+        db_index=True,
+    )
+    resolution_notes = models.TextField(blank=True, default="")
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_disputes",
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "activity_disputes"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["membership", "created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Dispute {self.id} ({self.status}) by {self.membership}"

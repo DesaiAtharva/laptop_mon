@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from rest_framework import serializers
-from apps.analytics.models import AppUsageInterval, DailyMetrics, DataExport, ExportType
+from apps.analytics.models import AppUsageInterval, DailyMetrics, DataExport, Dispute, ExportType
 
 
 class DailyMetricsSerializer(serializers.ModelSerializer):
@@ -88,3 +88,55 @@ class DataExportSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+
+class DisputeSerializer(serializers.ModelSerializer):
+    """Serialized dispute object (§11.3, E89)."""
+
+    employee_name = serializers.CharField(source="membership.user.name", read_only=True)
+    employee_email = serializers.CharField(source="membership.user.email", read_only=True)
+    reviewed_by_name = serializers.CharField(source="reviewed_by.name", read_only=True)
+
+    class Meta:
+        model = Dispute
+        fields = [
+            "id",
+            "membership_id",
+            "employee_name",
+            "employee_email",
+            "interval_id",
+            "target_app",
+            "target_date",
+            "reason",
+            "desired_classification",
+            "status",
+            "resolution_notes",
+            "reviewed_by_name",
+            "resolved_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "membership_id",
+            "employee_name",
+            "employee_email",
+            "reviewed_by_name",
+            "resolved_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class DisputeCreateSerializer(serializers.ModelSerializer):
+    """Payload for submitting a dispute (E89)."""
+
+    class Meta:
+        model = Dispute
+        fields = [
+            "interval",
+            "target_app",
+            "target_date",
+            "reason",
+            "desired_classification",
+        ]
