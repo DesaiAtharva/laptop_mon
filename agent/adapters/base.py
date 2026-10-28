@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Protocol, Set
+from typing import Any, Dict, List, Optional, Protocol, Set, runtime_checkable
 
 
 class AdapterCapability(Enum):
@@ -85,6 +85,7 @@ class CaptureResult:
     skip_reason: Optional[str] = None  # Internal diagnostic only; redacted before upload
 
 
+@runtime_checkable
 class OSAdapterProtocol(Protocol):
     """
     Protocol that every platform adapter (Windows, macOS, Linux, fake) must implement.

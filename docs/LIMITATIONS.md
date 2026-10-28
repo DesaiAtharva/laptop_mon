@@ -6,5 +6,6 @@
 | ID | Limitation | Safe Behavior | Test | Prompt |
 |---|---|---|---|---|
 | LIM-001 | SQLite WAL with `synchronous=NORMAL`: events since last checkpoint may be lost on hard power loss (E08) | Gap event written on next startup; loss window is bounded and documented (ADR-004) | `test_E08_hard_power_loss` | P5 |
-
-*Additional limitations will be added by each build prompt as they are discovered.*
+| LIM-002 | Windows Secure Desktop and UAC prompts execute on isolated desktop session (E64) | Capture skipped safely; OpenInputDesktop detects desktop switch; never attempted or bypassed | `test_E64_windows_secure_desktop_or_uac` | P6 |
+| LIM-003 | Lock screen contains sensitive credentials/notifications and is not captured by default (E57) | Screen capture skipped safely while workstation is locked; session.lock event logged | `test_E57_screen_locked_not_captured` | P6 |
+| LIM-004 | Antivirus / EDR tools may flag unsigned monitoring software (E92) | Zero obfuscation or evasion techniques; binary signing and IT allowlisting documented | `test_E92_antivirus_allowlisting_documentation` | P6 |

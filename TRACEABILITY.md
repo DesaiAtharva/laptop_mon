@@ -18,11 +18,11 @@
 | ID | Requirement | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
 | REQ-1-1 | MUST provide transparent, policy-driven, auditable monitoring | §1.1 | P0–P12 | | | todo |
-| REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
-| REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | | | todo |
+| REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
+| REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
+| REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py, agent/adapters/windows/adapter.py | tests/test_p3_screenshots_storage_retention.py, tests/test_p6_windows_adapter.py | done |
+| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
+| REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | agent/adapters/windows/ | tests/test_p6_windows_adapter.py | done |
 | REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | agent/core/journal.py, agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12 | | | todo |
 | REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12 | | | todo |
@@ -40,7 +40,7 @@
 | REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1 | | | todo |
 | REQ-4-1 | Agent core MUST NOT import OS-specific modules | §4.1 | P5 | agent/core/ | tests/test_p5_agent_core.py | done |
 | REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | agent/core/scheduler.py, agent/core/journal.py | tests/test_p5_agent_core.py | done |
-| REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | agent/core/status.py | tests/test_p5_agent_core.py | done |
+| REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | agent/core/status.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | REQ-4-4 | Monitoring state MUST remain discoverable when UI is closed | §4.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
 | REQ-4-5 | Updater MUST verify hash and signature before applying update | §4.4 | P7 | | | todo |
 | REQ-4-6 | Updater MUST rollback on any failure | §4.4 | P7 | | | todo |
@@ -150,19 +150,19 @@
 | E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E54 | Retention job fails | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
-| E57 | Screen locked | §13 | P6 | | | todo |
-| E58 | Sleep, hibernate and wake | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E59 | Fast user switching | §13 | P5, P6, P11 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
-| E60 | Remote desktop or VDI | §13 | P6, P12 | | | todo |
-| E61 | Multiple monitors and topology changes | §13 | P6, P11 | | | todo |
+| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
+| E57 | Screen locked | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
+| E58 | Sleep, hibernate and wake | §13 | P4, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
+| E59 | Fast user switching | §13 | P5, P6, P11 | agent/core/lifecycle.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
+| E60 | Remote desktop or VDI | §13 | P6, P12 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
+| E61 | Multiple monitors and topology changes | §13 | P6, P11 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
 | E62 | Wayland and X11 capability mismatch | §13 | P12 | | | todo |
 | E63 | macOS permission reset | §13 | P11 | | | todo |
-| E64 | Windows secure desktop or UAC | §13 | P6 | | | todo |
+| E64 | Windows secure desktop or UAC | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
 | E65 | Linux headless or unsupported desktop | §13 | P12 | | | todo |
-| E66 | App identifier unavailable | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E67 | Window title has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py | tests/test_p5_agent_core.py | done |
-| E68 | Screenshot has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py | tests/test_p5_agent_core.py | done |
+| E66 | App identifier unavailable | §13 | P4, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
+| E67 | Window title has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
+| E68 | Screenshot has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E69 | App classification changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E70 | Idle threshold changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E71 | Session never receives end event | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
@@ -186,13 +186,13 @@
 | E89 | False positive or employee dispute | §13 | P8 | | | todo |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | | | todo |
-| E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | | | todo |
+| E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |
 | E93 | Monotonic clock reset after reboot | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
 | E94 | Compression differs by OS | §13 | P5 | | | todo |
-| E95 | Very large multi-monitor capture | §13 | P6 | | | todo |
+| E95 | Very large multi-monitor capture | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
 | E96 | Battery saver or CPU pressure | §13 | P5 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
 | E97 | Offline beyond retention or quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
-| E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, agent/core/lifecycle.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
+| E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, agent/core/lifecycle.py, agent/adapters/windows/adapter.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E99 | Concurrent admin policy edits | §13 | P2, P8 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E100 | Support staff accesses customer data | §13 | P1 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 
