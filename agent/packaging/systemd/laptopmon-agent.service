@@ -1,0 +1,25 @@
+[Unit]
+Description=Laptop Productivity Monitoring Agent
+Documentation=https://docs.laptopmon.internal/
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/opt/laptopmon/bin/laptopmon-agent --session-agent
+Restart=on-failure
+RestartSec=5s
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+Slice=app.slice
+
+# Security & Sandboxing restrictions
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/share/laptopmon %h/.config/laptopmon
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical-session.target default.target

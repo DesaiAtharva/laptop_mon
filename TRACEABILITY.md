@@ -21,8 +21,9 @@
 | REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py, agent/adapters/windows/adapter.py | tests/test_p3_screenshots_storage_retention.py, tests/test_p6_windows_adapter.py | done |
-| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
-| REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | agent/adapters/windows/, agent/adapters/macos/ | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py | done |
+| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p12_linux_adapter.py | done |
+| REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | agent/adapters/windows/, agent/adapters/macos/, agent/adapters/linux/ | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
+
 
 | REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | agent/core/journal.py, agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12 | | | todo |
@@ -118,7 +119,8 @@
 | E19 | SQLite corrupt | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | E20 | Screenshot file without DB row | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | E21 | DB row without screenshot file | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
-| E22 | Encryption key unavailable | §13 | P5, P12 | agent/core/crypto.py | tests/test_p5_agent_core.py | done |
+| E22 | Encryption key unavailable | §13 | P5, P12 | agent/core/crypto.py, agent/adapters/linux/linux_api.py | tests/test_p5_agent_core.py, tests/test_p12_linux_adapter.py | done |
+
 | E23 | Device reimaged or profile deleted | §13 | P2, P5 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E25 | Device clock far off | §13 | P2, P4, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
@@ -152,17 +154,18 @@
 | E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E54 | Retention job fails | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py | done |
+| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
 | E57 | Screen locked | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
 | E58 | Sleep, hibernate and wake | §13 | P4, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | E59 | Fast user switching | §13 | P5, P6, P11 | agent/core/lifecycle.py, agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py | done |
-| E60 | Remote desktop or VDI | §13 | P6, P12 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
+| E60 | Remote desktop or VDI | §13 | P6, P12 | agent/adapters/windows/adapter.py, agent/adapters/linux/adapter.py | tests/test_p6_windows_adapter.py, tests/test_p12_linux_adapter.py | done |
 | E61 | Multiple monitors and topology changes | §13 | P6, P11 | agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py | done |
-| E62 | Wayland and X11 capability mismatch | §13 | P12 | | | todo |
+| E62 | Wayland and X11 capability mismatch | §13 | P12 | agent/adapters/linux/adapter.py | tests/test_p12_linux_adapter.py | done |
 | E63 | macOS permission reset | §13 | P11 | agent/adapters/macos/adapter.py | tests/test_p11_macos_adapter.py | done |
 
 | E64 | Windows secure desktop or UAC | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
-| E65 | Linux headless or unsupported desktop | §13 | P12 | | | todo |
+| E65 | Linux headless or unsupported desktop | §13 | P12 | agent/adapters/linux/adapter.py | tests/test_p12_linux_adapter.py | done |
+
 | E66 | App identifier unavailable | §13 | P4, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | E67 | Window title has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E68 | Screenshot has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
@@ -191,7 +194,8 @@
 | E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |
 | E93 | Monotonic clock reset after reboot | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
-| E94 | Compression differs by OS | §13 | P5 | | | todo |
+| E94 | Compression differs by OS | §13 | P5, P12 | agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py, agent/adapters/linux/adapter.py | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
+
 | E95 | Very large multi-monitor capture | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
 | E96 | Battery saver or CPU pressure | §13 | P5 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
 | E97 | Offline beyond retention or quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
