@@ -69,7 +69,7 @@ class ActivityEvent(models.Model):
     - Immutable once written (modifications and deletions prohibited).
     """
 
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(
         Tenant,
         on_delete=models.CASCADE,

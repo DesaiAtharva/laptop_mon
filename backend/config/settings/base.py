@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.policies",
     "apps.ingestion",
     "apps.screenshots",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [
@@ -180,3 +181,14 @@ SCREENSHOT_UPLOAD_INTENT_EXPIRY_SECONDS = int(os.environ.get("SCREENSHOT_UPLOAD_
 SCREENSHOT_MAX_FILE_SIZE_BYTES = int(os.environ.get("SCREENSHOT_MAX_FILE_SIZE_BYTES", str(10 * 1024 * 1024)))
 SCREENSHOT_MAX_WIDTH = 7680
 SCREENSHOT_MAX_HEIGHT = 4320
+
+# Analytics & Reports Configuration (§9, §10.3, E81, E82)
+ANALYTICS_MAX_EXPORT_ROWS = int(os.environ.get("ANALYTICS_MAX_EXPORT_ROWS", "50000"))
+ANALYTICS_MAX_DATE_RANGE_DAYS = int(os.environ.get("ANALYTICS_MAX_DATE_RANGE_DAYS", "90"))
+ANALYTICS_DEFAULT_WORK_HOURS_PER_DAY = float(os.environ.get("ANALYTICS_DEFAULT_WORK_HOURS_PER_DAY", "8.0"))
+
+# Celery Configuration
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "True").lower() == "true"
+CELERY_TASK_EAGER_PROPAGATES = True

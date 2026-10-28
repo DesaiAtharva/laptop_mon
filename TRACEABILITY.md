@@ -18,8 +18,8 @@
 | ID | Requirement | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
 | REQ-1-1 | MUST provide transparent, policy-driven, auditable monitoring | §1.1 | P0–P12 | | | todo |
-| REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | | | todo |
-| REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | | | todo |
+| REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | | | todo |
 | REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | | | todo |
@@ -61,13 +61,13 @@
 | REQ-7-4 | Raw accepted events MUST be immutable | §7.2 | P2 | backend/apps/ingestion/models.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-8-1 | All API errors MUST return stable machine-readable codes with correlation ID | §8.1 | P2 | backend/apps/common/exceptions.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-8-2 | No error response MAY leak information about other tenants | §8.1 | P1, P2 | backend/apps/common/exceptions.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | backend/apps/rbac/permissions.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | backend/apps/rbac/permissions.py, backend/apps/analytics/tasks.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1 | tests/test_p1_tenancy_rbac_audit.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| REQ-9-1 | Timeline reconstruction MUST be deterministic | §9.1 | P4 | | | todo |
-| REQ-9-2 | No overlapping intervals per device | §9.1 | P4 | | | todo |
-| REQ-9-3 | Gaps MUST be explicit unknowns — never filled or counted as activity | §9.1 | P4 | | | todo |
-| REQ-9-4 | Impossible sequences MUST be normalized, recorded as anomalies, never produce negative durations | §9.1 | P4 | | | todo |
-| REQ-9-5 | Daily metrics MUST have a unique grain; recalculation MUST be idempotent | §9.3 | P4 | | | todo |
+| REQ-9-1 | Timeline reconstruction MUST be deterministic | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| REQ-9-2 | No overlapping intervals per device | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| REQ-9-3 | Gaps MUST be explicit unknowns — never filled or counted as activity | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| REQ-9-4 | Impossible sequences MUST be normalized, recorded as anomalies, never produce negative durations | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| REQ-9-5 | Daily metrics MUST have a unique grain; recalculation MUST be idempotent | §9.3 | P4 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-10-1 | Screenshots MUST NOT be stored in MySQL — only object keys | §10.2 | P3 | backend/apps/screenshots/models.py, backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-10-2 | Object keys MUST be tenant-scoped and non-guessable | §10.2 | P3 | backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-10-3 | Every upload MUST be treated as untrusted (strict decode, type/dimension limits) | §10.2 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
@@ -120,11 +120,11 @@
 | E23 | Device reimaged or profile deleted | §13 | P2, P5 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E25 | Device clock far off | §13 | P2, P4, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E26 | Clock changes while running | §13 | P4, P5 | | | todo |
-| E27 | Timezone changes | §13 | P4, P5 | | | todo |
-| E28 | DST 23 or 25 hour day | §13 | P4 | | | todo |
-| E29 | Duplicate timestamps | §13 | P4 | | | todo |
-| E30 | Events arrive out of order | §13 | P4 | | | todo |
+| E26 | Clock changes while running | §13 | P4, P5 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E27 | Timezone changes | §13 | P4, P5 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E28 | DST 23 or 25 hour day | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E29 | Duplicate timestamps | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E30 | Events arrive out of order | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E31 | Duplicate event ID, same payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E32 | Duplicate event ID, different payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E33 | Unknown event type | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
@@ -152,7 +152,7 @@
 | E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | | | todo |
 | E57 | Screen locked | §13 | P6 | | | todo |
-| E58 | Sleep, hibernate and wake | §13 | P4, P6 | | | todo |
+| E58 | Sleep, hibernate and wake | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E59 | Fast user switching | §13 | P5, P6, P11 | | | todo |
 | E60 | Remote desktop or VDI | §13 | P6, P12 | | | todo |
 | E61 | Multiple monitors and topology changes | §13 | P6, P11 | | | todo |
@@ -160,23 +160,23 @@
 | E63 | macOS permission reset | §13 | P11 | | | todo |
 | E64 | Windows secure desktop or UAC | §13 | P6 | | | todo |
 | E65 | Linux headless or unsupported desktop | §13 | P12 | | | todo |
-| E66 | App identifier unavailable | §13 | P4, P6 | | | todo |
+| E66 | App identifier unavailable | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E67 | Window title has sensitive data | §13 | P5, P6 | | | todo |
 | E68 | Screenshot has sensitive data | §13 | P5, P6 | | | todo |
-| E69 | App classification changes | §13 | P4, P8 | | | todo |
-| E70 | Idle threshold changes | §13 | P4, P8 | | | todo |
-| E71 | Session never receives end event | §13 | P4 | | | todo |
-| E72 | Idle end without idle start | §13 | P4 | | | todo |
-| E73 | Overlapping app intervals | §13 | P4 | | | todo |
-| E74 | Late event changes daily totals | §13 | P4, P8 | | | todo |
-| E75 | Worker retries same job | §13 | P4 | | | todo |
-| E76 | Celery or Redis unavailable | §13 | P4 | | | todo |
-| E77 | MySQL failover or deadlock | §13 | P4, P10 | | | todo |
+| E69 | App classification changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E70 | Idle threshold changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E71 | Session never receives end event | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E72 | Idle end without idle start | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E73 | Overlapping app intervals | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E74 | Late event changes daily totals | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E75 | Worker retries same job | §13 | P4 | backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E76 | Celery or Redis unavailable | §13 | P4 | backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E77 | MySQL failover or deadlock | §13 | P4, P10 | backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E78 | Database migration fails | §13 | P1, P10 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E79 | Connection pool exhausted | §13 | P4 | | | todo |
+| E79 | Connection pool exhausted | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E80 | Stale or cross-tenant cache | §13 | P1, P10 | backend/apps/common/cache.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E81 | Report query too large | §13 | P4 | | | todo |
-| E82 | Export exceeds limits | §13 | P4 | | | todo |
+| E81 | Report query too large | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E82 | Export exceeds limits | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E83 | Invitation email delivery fails | §13 | P9 | | | todo |
 | E84 | Payment webhook duplicated or out of order | §13 | P9 | | | todo |
 | E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
