@@ -82,7 +82,7 @@
 | REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | .coveragerc, backend, agent/core | tests/test_t1_coverage_baseline.py, docs/test-evidence/T1.md | done |
 | REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | backend/apps/tenancy/context.py, backend/apps/ingestion/services.py, backend/apps/analytics/timeline.py, agent/core/journal.py, agent/core/spool.py | tests/test_t1_coverage_baseline.py | done |
 | REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | | | todo |
-| REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | | | todo |
+| REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | agent/core/journal.py, agent/core/spool.py, agent/core/lifecycle.py, agent/core/sync.py, backend/apps/ingestion/services.py, backend/apps/analytics/tasks.py | tests/test_t4_fault_injection.py, docs/test-evidence/T4.md | done |
 | REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | agent/installer/install.py, agent/packaging/build_windows.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-2 | Uninstaller MUST follow pending-data policy and NEVER silently delete unsynced data | §15.1 | P7 | agent/installer/uninstall.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-3 | Per-tenant quotas MUST be enforced server-side | §15.3 | P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p9_billing_and_lifecycle.py | done |

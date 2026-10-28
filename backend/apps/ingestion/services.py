@@ -68,15 +68,20 @@ def check_agent_version_compatibility(agent_version: str, policy: MonitoringPoli
 
 
 def check_device_rate_limit(device: Device) -> None:
-    """Enforces per-device ingestion rate limits (E35)."""
-    cache_key = f"rate_limit:device:{device.id}"
-    current_count = cache.get(cache_key, 0)
-    if current_count >= MAX_REQUESTS_PER_MINUTE:
-        raise RateLimitedException(
-            "Device event ingestion rate limit exceeded. Please back off.",
-            retry_after=60,
-        )
-    cache.set(cache_key, current_count + 1, timeout=60)
+    """Enforces per-device ingestion rate limits (E35). Degrades gracefully on cache outage (E76)."""
+    try:
+        cache_key = f"rate_limit:device:{device.id}"
+        current_count = cache.get(cache_key, 0)
+        if current_count >= MAX_REQUESTS_PER_MINUTE:
+            raise RateLimitedException(
+                "Device event ingestion rate limit exceeded. Please back off.",
+                retry_after=60,
+            )
+        cache.set(cache_key, current_count + 1, timeout=60)
+    except RateLimitedException:
+        raise
+    except Exception as ex:
+        logger.warning("Cache unavailable for rate limit check; degrading gracefully (E76): %s", ex)
 
 
 def canonical_json(data: Any) -> str:
