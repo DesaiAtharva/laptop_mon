@@ -97,12 +97,29 @@ def parse_table_rows(content: str) -> list[Row]:
             if not re.match(r'^(REQ-|E\d{2}|AC-|RC-)', row_id):
                 continue
 
-            description = parts[1] if len(parts) > 1 else ""
-            section = parts[2] if len(parts) > 2 else ""
-            prompt = parts[3] if len(parts) > 3 else ""
-            code_path = parts[4] if len(parts) > 4 else ""
-            test_path = parts[5] if len(parts) > 5 else ""
-            status = parts[6] if len(parts) > 6 else (parts[4] if len(parts) > 4 else "")
+            if row_id.startswith("AC-"):
+                # | ID | Criterion | Prompt | Evidence | Status |
+                description = parts[1] if len(parts) > 1 else ""
+                section = "§14.2"
+                prompt = parts[2] if len(parts) > 2 else ""
+                code_path = ""
+                test_path = parts[3] if len(parts) > 3 else ""
+                status = parts[4] if len(parts) > 4 else ""
+            elif row_id.startswith("RC-"):
+                # | ID | Item | Evidence Link | Status |
+                description = parts[1] if len(parts) > 1 else ""
+                section = "§17.1"
+                prompt = "T8"
+                code_path = ""
+                test_path = parts[2] if len(parts) > 2 else ""
+                status = parts[3] if len(parts) > 3 else ""
+            else:
+                description = parts[1] if len(parts) > 1 else ""
+                section = parts[2] if len(parts) > 2 else ""
+                prompt = parts[3] if len(parts) > 3 else ""
+                code_path = parts[4] if len(parts) > 4 else ""
+                test_path = parts[5] if len(parts) > 5 else ""
+                status = parts[6] if len(parts) > 6 else ""
 
             rows.append(Row(
                 id=row_id,

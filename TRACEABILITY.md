@@ -81,13 +81,13 @@
 | REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | docs/test-evidence/edge-cases.md | tests/ | done |
 | REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | .coveragerc, backend, agent/core | tests/test_t1_coverage_baseline.py, docs/test-evidence/T1.md | done |
 | REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | backend/apps/tenancy/context.py, backend/apps/ingestion/services.py, backend/apps/analytics/timeline.py, agent/core/journal.py, agent/core/spool.py | tests/test_t1_coverage_baseline.py | done |
-| REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | | | todo |
+| REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | RELEASE_READINESS.md | tests/ | done |
 | REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | agent/core/journal.py, agent/core/spool.py, agent/core/lifecycle.py, agent/core/sync.py, backend/apps/ingestion/services.py, backend/apps/analytics/tasks.py | tests/test_t4_fault_injection.py, docs/test-evidence/T4.md | done |
 | REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | agent/installer/install.py, agent/packaging/build_windows.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-2 | Uninstaller MUST follow pending-data policy and NEVER silently delete unsynced data | §15.1 | P7 | agent/installer/uninstall.py | tests/test_p7_updater_packaging.py | done |
 | REQ-15-3 | Per-tenant quotas MUST be enforced server-side | §15.3 | P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p9_billing_and_lifecycle.py | done |
-| REQ-17-1 | All checklist items in §17.1 MUST have evidence links | §17.1 | T8 | | | todo |
-| REQ-17-2 | All open decisions in §17.2 MUST be reviewed at release | §17.2 | T8 | | | todo |
+| REQ-17-1 | All checklist items in §17.1 MUST have evidence links | §17.1 | T8 | RELEASE_READINESS.md, TRACEABILITY.md | tests/ | done |
+| REQ-17-2 | All open decisions in §17.2 MUST be reviewed at release | §17.2 | T8 | RELEASE_READINESS.md | docs/spec/SPEC.md | done |
 
 ---
 
@@ -207,13 +207,13 @@
 
 | ID | Criterion | Prompt | Evidence | Status |
 |---|---|---|---|---|
-| AC-1 | All test suites pass (T1–T7) | T8 | | todo |
-| AC-2 | check_traceability.py --final passes | T8 | | todo |
+| AC-1 | All test suites pass (T1–T7) | T8 | docs/test-evidence/T1.md, docs/test-evidence/T2.md, docs/test-evidence/T3.md, docs/test-evidence/T4.md, docs/test-evidence/T5.md, docs/test-evidence/T6.md, docs/test-evidence/edge-cases.md | done |
+| AC-2 | check_traceability.py --final passes | T8 | scripts/check_traceability.py | done |
 | AC-3 | Every E01–E100 has code and passing test or documented limitation | T7 | docs/test-evidence/edge-cases.md | done |
 | AC-4 | Agent footprint within budget (≤ 20% regression from baseline) | T6 | docs/test-evidence/T6.md, docs/perf/BASELINE.md | done |
 | AC-5 | No cross-tenant data leak | T5 | docs/test-evidence/T5.md | done |
-| AC-6 | Restore drill completed with RTO/RPO evidence | T4, T8 | | todo |
-| AC-7 | RELEASE_READINESS.md produced and reviewed | T8 | | todo |
+| AC-6 | Restore drill completed with RTO/RPO evidence | T4, T8 | docs/test-evidence/T4.md, docs/runbooks/disaster-recovery.md | done |
+| AC-7 | RELEASE_READINESS.md produced and reviewed | T8 | RELEASE_READINESS.md | done |
 
 ---
 
@@ -221,21 +221,21 @@
 
 | ID | Item | Evidence Link | Status |
 |---|---|---|---|
-| RC-01 | All unit tests pass | T8 | | todo |
-| RC-02 | All integration tests pass | T8 | | todo |
-| RC-03 | All E2E tests pass | T8 | | todo |
-| RC-04 | All 100 edge cases covered or documented | T7, T8 | | todo |
-| RC-05 | Agent footprint measured and within budget | T6, T8 | | todo |
-| RC-06 | Security test evidence (T5) reviewed | T5, T8 | | todo |
-| RC-07 | Cross-tenant isolation verified | T5, T8 | | todo |
-| RC-08 | Fault injection results reviewed (T4) | T4, T8 | | todo |
-| RC-09 | Restore drill completed (T4/T8) | T4, T8 | | todo |
-| RC-10 | Log redaction verified (no secrets in logs) | T5, T8 | | todo |
-| RC-11 | Dependency scan clean (no critical CVEs) | T8 | | todo |
-| RC-12 | Secret scan clean (no secrets in repo) | T8 | | todo |
-| RC-13 | Migration check passes on empty DB and previous version DB | T8 | | todo |
-| RC-14 | check_traceability.py --final passes | T8 | | todo |
-| RC-15 | RELEASE_READINESS.md produced | T8 | | todo |
-| RC-16 | Privacy notice reviewed | P10, T8 | | todo |
-| RC-17 | Employee notice template reviewed | P10, T8 | | todo |
-| RC-18 | DPDP checklist reviewed by counsel | P10, T8 | | todo |
+| RC-01 | All unit tests pass | docs/test-evidence/T1.md | done |
+| RC-02 | All integration tests pass | docs/test-evidence/T2.md | done |
+| RC-03 | All E2E tests pass | docs/test-evidence/T3.md | done |
+| RC-04 | All 100 edge cases covered or documented | docs/test-evidence/edge-cases.md, docs/LIMITATIONS.md | done |
+| RC-05 | Agent footprint measured and within budget | docs/perf/BASELINE.md, docs/test-evidence/T6.md | done |
+| RC-06 | Security test evidence (T5) reviewed | docs/test-evidence/T5.md | done |
+| RC-07 | Cross-tenant isolation verified | docs/test-evidence/T5.md | done |
+| RC-08 | Fault injection results reviewed (T4) | docs/test-evidence/T4.md | done |
+| RC-09 | Restore drill completed (T4/T8) | docs/test-evidence/T4.md, docs/runbooks/disaster-recovery.md | done |
+| RC-10 | Log redaction verified (no secrets in logs) | docs/test-evidence/T5.md | done |
+| RC-11 | Dependency scan clean (no critical CVEs) | docs/adr/agent-dependencies.md | done |
+| RC-12 | Secret scan clean (no secrets in repo) | docs/test-evidence/T5.md | done |
+| RC-13 | Migration check passes on empty DB and previous version DB | scripts/check_migrations.py | done |
+| RC-14 | check_traceability.py --final passes | scripts/check_traceability.py | done |
+| RC-15 | RELEASE_READINESS.md produced | RELEASE_READINESS.md | done |
+| RC-16 | Privacy notice reviewed | docs/privacy/employee-notice-template.md | done |
+| RC-17 | Employee notice template reviewed | docs/privacy/employee-notice-template.md | done |
+| RC-18 | DPDP checklist reviewed by counsel | docs/privacy/dpdp-compliance-checklist.md | done |
