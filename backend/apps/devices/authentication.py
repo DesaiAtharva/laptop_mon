@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import uuid
 from typing import Any, Optional, Tuple
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
@@ -50,6 +51,16 @@ class DeviceBearerAuthentication(authentication.BaseAuthentication):
 
         if not credential.is_valid:
             raise exceptions.AuthenticationFailed("Device credential has expired or is invalid.")
+
+        # Cross-device impersonation check (E40)
+        device_id_header = request.headers.get("X-Device-ID")
+        if device_id_header:
+            try:
+                target_device_id = uuid.UUID(device_id_header)
+                if device.id != target_device_id:
+                    raise exceptions.PermissionDenied("Device credential does not match the requested device ID.")
+            except (ValueError, TypeError):
+                raise exceptions.AuthenticationFailed("Invalid X-Device-ID header.")
 
         tenant = device.tenant
         if tenant.status == TenantStatus.SUSPENDED:

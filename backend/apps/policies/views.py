@@ -50,6 +50,13 @@ class PolicyDetailUpdateView(APIView):
 
     permission_classes = [IsOrgAdmin]
 
+    def get(self, request: Request, pk: uuid.UUID, *args: Any, **kwargs: Any) -> Response:
+        try:
+            policy = MonitoringPolicy.objects.get(id=pk, tenant=request.tenant)
+        except MonitoringPolicy.DoesNotExist:
+            raise NotFound("Policy not found.")
+        return Response(MonitoringPolicySerializer(policy).data, status=status.HTTP_200_OK)
+
     def patch(self, request: Request, pk: uuid.UUID, *args: Any, **kwargs: Any) -> Response:
         try:
             policy = MonitoringPolicy.objects.get(id=pk, tenant=request.tenant)

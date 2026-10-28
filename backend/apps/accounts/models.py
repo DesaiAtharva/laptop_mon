@@ -129,3 +129,9 @@ class UserSession(BaseUUIDModel):
         if not self.revoked_at:
             self.revoked_at = timezone.now()
             self.save(update_fields=["revoked_at"])
+
+    @classmethod
+    def revoke_all_for_user(cls, user: User) -> int:
+        """Immediately revoke all active sessions for a user (E48)."""
+        now = timezone.now()
+        return cls.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=now)
