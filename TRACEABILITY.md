@@ -98,8 +98,8 @@
 | ID | Edge Case | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
 | E01 | No internet at startup | §13 | P5 | agent/core/policy.py | tests/test_p5_agent_core.py | done |
-| E02 | Connection lost mid-upload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E03 | Batch committed but response lost | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E02 | Connection lost mid-upload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
+| E03 | Batch committed but response lost | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
 | E04 | DNS failure or captive portal | §13 | P5 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
 | E05 | Proxy, VPN or firewall blocks API | §13 | P5 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
 | E06 | TLS certificate invalid or expired | §13 | P5, P10 | agent/core/sync.py | tests/test_p5_agent_core.py | done |
@@ -113,7 +113,7 @@
 | E14 | OS update or reboot | §13 | P7, P11 | agent/core/updater.py, agent/adapters/macos/adapter.py | tests/test_p7_updater_packaging.py, tests/test_p11_macos_adapter.py | done |
 
 | E15 | Agent update interrupted | §13 | P7 | agent/core/updater.py | tests/test_p7_updater_packaging.py | done |
-| E16 | Agent and server version mismatch | §13 | P2, P7 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E16 | Agent and server version mismatch | §13 | P2, P7 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
 | E17 | Local disk full | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | E18 | Local queue reaches quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | E19 | SQLite corrupt | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
@@ -122,36 +122,36 @@
 | E22 | Encryption key unavailable | §13 | P5, P12 | agent/core/crypto.py, agent/adapters/linux/linux_api.py | tests/test_p5_agent_core.py, tests/test_p12_linux_adapter.py | done |
 
 | E23 | Device reimaged or profile deleted | §13 | P2, P5 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
 | E25 | Device clock far off | §13 | P2, P4, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E26 | Clock changes while running | §13 | P4, P5 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E27 | Timezone changes | §13 | P4, P5 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E28 | DST 23 or 25 hour day | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E29 | Duplicate timestamps | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E30 | Events arrive out of order | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E31 | Duplicate event ID, same payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E31 | Duplicate event ID, same payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
 | E32 | Duplicate event ID, different payload | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E33 | Unknown event type | §13 | P2 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E34 | Oversized batch | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E35 | Rate limit or overload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E36 | Partial batch acceptance | §13 | P2, P5 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E37 | Policy changed while offline | §13 | P2, P5 | backend/apps/policies/models.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
-| E38 | Device revoked while offline | §13 | P2, P5 | backend/apps/devices/authentication.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
+| E36 | Partial batch acceptance | §13 | P2, P5 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t2_full_integration.py | done |
+| E37 | Policy changed while offline | §13 | P2, P5 | backend/apps/policies/models.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py, tests/test_t2_full_integration.py | done |
+| E38 | Device revoked while offline | §13 | P2, P5 | backend/apps/devices/authentication.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py, tests/test_t2_full_integration.py | done |
 | E39 | Enrollment token reused or expired | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E40 | Device credential leaked | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E41 | Employee moved to another team | §13 | P1, P8 | backend/apps/tenancy/views.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E42 | Employee leaves company | §13 | P1, P9 | backend/apps/tenancy/models.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
 | E44 | Tenant deleted | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
-| E45 | Cross-tenant object ID guessed | §13 | P1 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E45 | Cross-tenant object ID guessed | §13 | P1 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py | done |
+| E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py | done |
 | E47 | Manager changes teams | §13 | P1, P8 | backend/apps/rbac/permissions.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E48 | Admin account compromised | §13 | P1, P10 | backend/apps/accounts/models.py, backend/apps/accounts/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E49 | Screenshot view URL leaked | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E50 | Malicious uploaded file | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E51 | Screenshot upload partially completes | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E52 | Upload succeeded, finalize failed | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E51 | Screenshot upload partially completes | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t2_full_integration.py | done |
+| E52 | Upload succeeded, finalize failed | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t2_full_integration.py | done |
+| E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t2_full_integration.py | done |
 | E54 | Retention job fails | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
@@ -170,7 +170,7 @@
 | E67 | Window title has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E68 | Screenshot has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E69 | App classification changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E70 | Idle threshold changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E70 | Idle threshold changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py, tests/test_t2_full_integration.py | done |
 | E71 | Session never receives end event | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E72 | Idle end without idle start | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E73 | Overlapping app intervals | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |

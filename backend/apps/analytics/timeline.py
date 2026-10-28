@@ -229,21 +229,26 @@ class TimelineReconstructionEngine:
                 state.is_asleep = False
 
             # 2. Foreground application focus
-            elif ev_type == "app.focus":
+            elif ev_type in ("app.focus", "app.active"):
                 close_interval(ev_time)
                 # Auto-open session if missing (inferred E71)
                 if not state.session_open:
                     state.session_open = True
                     state.anomalies.append("app.focus_without_session_start")
-                state.current_app = payload.get("app") or payload.get("process_name") or "unknown"
+                state.current_app = (
+                    payload.get("app")
+                    or payload.get("app_identifier")
+                    or payload.get("process_name")
+                    or "unknown"
+                )
                 state.is_idle = False
 
             # 3. Idle events
-            elif ev_type == "idle.start":
+            elif ev_type in ("idle.start", "session.idle_start"):
                 close_interval(ev_time)
                 state.is_idle = True
 
-            elif ev_type == "idle.end":
+            elif ev_type in ("idle.end", "session.idle_end"):
                 if not state.is_idle:
                     # Impossible sequence: idle.end without idle.start (E72)
                     state.anomalies.append("idle.end_without_idle_start")
@@ -262,18 +267,18 @@ class TimelineReconstructionEngine:
                 state.is_locked = False
 
             # 5. Sleep / Wake (E58)
-            elif ev_type == "system.sleep":
+            elif ev_type in ("system.sleep", "session.sleep"):
                 close_interval(ev_time)
                 state.is_asleep = True
 
-            elif ev_type == "system.wake":
+            elif ev_type in ("system.wake", "session.wake", "session.resume"):
                 if not state.is_asleep:
                     state.anomalies.append("system.wake_without_sleep")
                 close_interval(ev_time)
                 state.is_asleep = False
 
             # 6. Telemetry gaps (REQ-9-3)
-            elif ev_type == "gap.telemetry":
+            elif ev_type in ("gap.telemetry", "telemetry.gap"):
                 close_interval(ev_time)
                 # Emit explicit telemetry gap interval
                 gap_duration = float(payload.get("gap_seconds", 0.0))

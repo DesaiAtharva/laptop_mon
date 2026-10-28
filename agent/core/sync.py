@@ -48,6 +48,7 @@ class SyncWorker:
         policy_manager: PolicyManager,
         status_tracker: StatusTracker,
         http_client: Optional[Callable[[str, bytes, Dict[str, str], str], Tuple[int, bytes, Dict[str, str]]]] = None,
+        agent_version: str = "1.0.0",
     ) -> None:
         self.base_api_url = base_api_url.rstrip("/")
         self.device_id = device_id
@@ -57,6 +58,7 @@ class SyncWorker:
         self.policy_manager = policy_manager
         self.status_tracker = status_tracker
         self.http_client = http_client or self._default_http_request
+        self.agent_version = agent_version
 
         self.consecutive_failures: int = 0
         self.backoff_until: float = 0.0
@@ -119,7 +121,11 @@ class SyncWorker:
             }
             for e in pending
         ]
-        body = json.dumps({"events": payload_events}).encode("utf-8")
+        body = json.dumps({
+            "agent_version": getattr(self, "agent_version", "1.0.0"),
+            "schema_version": 1,
+            "events": payload_events,
+        }).encode("utf-8")
 
         url = f"{self.base_api_url}/api/agent/events/batch/"
         try:
@@ -140,7 +146,7 @@ class SyncWorker:
     ) -> int:
         event_ids = [e.id for e in events]
 
-        if status in (200, 201):
+        if status in (200, 201, 207):
             self.consecutive_failures = 0
             self.backoff_until = 0.0
             resp_data = json.loads(resp_bytes.decode("utf-8")) if resp_bytes else {}

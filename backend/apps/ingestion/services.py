@@ -23,13 +23,20 @@ MAX_REQUESTS_PER_MINUTE = 120
 
 KNOWN_EVENT_TYPES = {
     "app.focus",
+    "app.active",
     "session.state",
     "session.lock",
     "session.unlock",
     "session.sleep",
     "session.resume",
+    "session.wake",
+    "session.idle_start",
+    "session.idle_end",
     "device.startup",
     "device.shutdown",
+    "screenshot.captured",
+    "screenshot.skipped",
+    "telemetry.gap",
     "heartbeat",
 }
 
