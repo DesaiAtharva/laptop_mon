@@ -34,7 +34,7 @@
 | REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1 | | | todo |
 | REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1 | | | todo |
 | REQ-2-7 | Tenant ID MUST be derived from authenticated membership — never from request body | §2.2, §3.2 | P1, P2 | | | todo |
-| REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | agent/core/sync.py | tests/test_p5_agent_core.py | done |
+| REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | agent/core/sync.py, backend/apps/common/middleware.py | tests/test_p5_agent_core.py, tests/test_p10_security_observability_dr.py | done |
 | REQ-3-2 | MUST use per-device credentials (prefer public-key) | §3.2 | P2 | | | todo |
 | REQ-3-3 | MUST use tenant-scoped querysets, cache keys, and object keys | §3.2 | P1, P2, P3 | backend/apps/screenshots/storage.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1 | | | todo |
@@ -75,9 +75,9 @@
 | REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | backend/apps/audit/models.py, backend/apps/audit/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
-| REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | | | todo |
+| REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | docs/threat-model.md | tests/test_p10_security_observability_dr.py | done |
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | | | todo |
+| REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | backend/apps/devices/alerts.py | tests/test_p10_security_observability_dr.py | done |
 | REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | | | todo |
 | REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | | | todo |
 | REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | | | todo |
@@ -180,9 +180,9 @@
 | E83 | Invitation email delivery fails | §13 | P9 | backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p9_billing_and_lifecycle.py | done |
 | E84 | Payment webhook duplicated or out of order | §13 | P9 | backend/apps/billing/services.py, backend/apps/billing/views.py | tests/test_p9_billing_and_lifecycle.py | done |
 | E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p9_billing_and_lifecycle.py | done |
-| E86 | Backup restore needed | §13 | P10 | | | todo |
-| E87 | Region or provider outage | §13 | P10 | | | todo |
-| E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
+| E86 | Backup restore needed | §13 | P10 | scripts/dr/backup_mysql.py, scripts/dr/restore_mysql.py, scripts/dr/verify_db_storage_consistency.py | tests/test_p10_security_observability_dr.py | done |
+| E87 | Region or provider outage | §13 | P10 | backend/apps/common/views.py, docs/runbooks/disaster-recovery.md | tests/test_p10_security_observability_dr.py | done |
+| E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py, backend/apps/common/logging.py | tests/test_p5_agent_core.py, tests/test_p10_security_observability_dr.py | done |
 | E89 | False positive or employee dispute | §13 | P8 | backend/apps/analytics/models.py, backend/apps/analytics/views.py, frontend/src/components/DisputeModal.tsx | tests/test_p8_dashboard_and_disputes.py | done |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |

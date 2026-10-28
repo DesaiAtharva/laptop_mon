@@ -48,6 +48,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "apps.common.middleware.RequestIDMiddleware",
+    "apps.common.middleware.RequestSizeLimiterMiddleware",
+    "apps.common.middleware.SecurityHeadersMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -194,3 +196,34 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "True").lower() == "true"
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Structured Logging & Secret Redaction (§11.4, E88)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "secret_redaction": {
+            "()": "apps.common.logging.SecretRedactingFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "apps.common.logging.JSONFormatter",
+        },
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s: %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["secret_redaction"],
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("LOG_LEVEL", "INFO"),
+    },
+}
+
