@@ -1,0 +1,29 @@
+[run]
+branch = True
+source =
+    backend
+    agent
+omit =
+    */tests/*
+    */migrations/*
+    */settings/*
+    backend/manage.py
+    backend/config/wsgi.py
+    backend/config/asgi.py
+    agent/packaging/*
+    agent/installer/*
+    agent/adapters/linux/linux_api.py
+    agent/adapters/macos/macos_api.py
+
+[report]
+precision = 1
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    \.\.\.

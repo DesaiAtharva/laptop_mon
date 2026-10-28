@@ -81,8 +81,8 @@
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | backend/apps/devices/alerts.py | tests/test_p10_security_observability_dr.py | done |
 | REQ-13-1 | Every edge case E01–E100 MUST have a test named test_E##_description OR documented limitation + safe behavior test | §13 | T7 | | | todo |
-| REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | | | todo |
-| REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | | | todo |
+| REQ-14-1 | Overall test coverage MUST be ≥ 80% branch | §14.1 | T1 | .coveragerc, backend, agent/core | tests/test_t1_coverage_baseline.py, docs/test-evidence/T1.md | done |
+| REQ-14-2 | Tenant scoping, ingestion, timeline, journal/spool coverage MUST be ≥ 90% branch | §14.1 | T1 | backend/apps/tenancy/context.py, backend/apps/ingestion/services.py, backend/apps/analytics/timeline.py, agent/core/journal.py, agent/core/spool.py | tests/test_t1_coverage_baseline.py | done |
 | REQ-14-3 | All acceptance criteria in §14.2 MUST pass with evidence | §14.2 | T8 | | | todo |
 | REQ-14-4 | Fault injection invariants in §14.3 MUST hold | §14.3 | T4 | | | todo |
 | REQ-15-1 | Native signed installer MUST embed Python runtime (users never install Python) | §15.1 | P7 | agent/installer/install.py, agent/packaging/build_windows.py | tests/test_p7_updater_packaging.py | done |
