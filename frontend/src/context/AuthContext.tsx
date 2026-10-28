@@ -17,12 +17,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tenants, setTenants] = useState<Tenant[]>([
-    { id: "ten-01", name: "Acme Cybernetics", status: "active" },
-    { id: "ten-02", name: "Wayne Enterprises", status: "active" },
-    { id: "ten-03", name: "Stark Industries", status: "active" },
-  ]);
-  const [activeTenant, setActiveTenant] = useState<Tenant | null>(tenants[0] || null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [activeTenant, setActiveTenant] = useState<Tenant | null>(null);
   const [role, setRole] = useState<MembershipRole>("employee");
   const [timezonePref, setTimezonePref] = useState<"local" | "UTC">("local");
   const [userName] = useState("Alex Vance");
@@ -34,12 +30,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const list = await api.getUserTenants();
         if (list && list.length > 0) {
           setTenants(list);
-          if (!activeTenant) {
-            setActiveTenant(list[0]);
-          }
+          setActiveTenant(list[0]);
         }
       } catch (err) {
-        console.warn("Could not fetch remote tenants, using default list", err);
+        console.warn("Could not fetch remote tenants", err);
       }
     }
     loadTenants();

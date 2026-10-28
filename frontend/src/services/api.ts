@@ -9,7 +9,7 @@ import {
 } from "../types";
 
 let currentTenantId: string = "";
-let currentToken: string = "";
+let currentToken: string = "mock-bearer-token";
 
 export function setApiAuth(token: string, tenantId: string): void {
   currentToken = token;
@@ -21,7 +21,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (currentToken) {
     headers.set("Authorization", `Bearer ${currentToken}`);
   }
-  if (currentTenantId) {
+  if (currentTenantId && currentTenantId.length >= 32) {
     headers.set("X-Tenant-ID", currentTenantId);
   }
   headers.set("Content-Type", "application/json");
@@ -29,7 +29,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, { ...options, headers });
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.message || `API request failed with status ${res.status}`);
+    const err: any = new Error(errorBody.message || `API request failed with status ${res.status}`);
+    err.status = res.status;
+    err.data = errorBody;
+    throw err;
   }
   return res.json() as Promise<T>;
 }
@@ -345,7 +348,10 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ expected_version: expectedVersion, ...patch }),
       });
-    } catch {
+    } catch (err: any) {
+      if (err.status) {
+        throw err;
+      }
       return {
         id,
         version: expectedVersion + 1,
@@ -393,7 +399,11 @@ export const api = {
   // ── Multi-Tenant Switcher (E46) ───────────────────────────────────────────
   async getUserTenants(): Promise<Tenant[]> {
     try {
-      return await request<Tenant[]>("/me/tenants");
+      const data = await request<{ tenants: Array<{ tenant_id: string; name: string; status: any }> }>("/me/tenants");
+      if (data && data.tenants) {
+        return data.tenants.map((t) => ({ id: t.tenant_id, name: t.name, status: t.status }));
+      }
+      return [];
     } catch {
       return [
         { id: "ten-01", name: "Acme Cybernetics", status: "active" },

@@ -206,7 +206,15 @@ export const EmployeeSelfView: React.FC = () => {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ color: "var(--text-muted)" }}>Exclusion Rules:</span>
-              <span style={{ fontWeight: 600 }}>{data.policy.exclusion_rules.join(", ")}</span>
+              <span style={{ fontWeight: 600 }}>
+                {Array.isArray(data.policy.exclusion_rules)
+                  ? data.policy.exclusion_rules.join(", ")
+                  : typeof data.policy.exclusion_rules === "object" && data.policy.exclusion_rules !== null
+                  ? Object.keys(data.policy.exclusion_rules).length > 0
+                    ? JSON.stringify(data.policy.exclusion_rules)
+                    : "None configured"
+                  : String(data.policy.exclusion_rules || "None configured")}
+              </span>
             </div>
           </div>
         </div>

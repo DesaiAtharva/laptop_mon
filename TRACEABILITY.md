@@ -17,29 +17,27 @@
 
 | ID | Requirement | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
-| REQ-1-1 | MUST provide transparent, policy-driven, auditable monitoring | §1.1 | P0–P12 | | | todo |
+| REQ-1-1 | MUST provide transparent, policy-driven, auditable monitoring | §1.1 | P0–P12, T3 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_t3_browser_e2e.py | done |
 | REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py, agent/adapters/windows/adapter.py | tests/test_p3_screenshots_storage_retention.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p12_linux_adapter.py | done |
 | REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | agent/adapters/windows/, agent/adapters/macos/, agent/adapters/linux/ | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
-
-
 | REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | agent/core/journal.py, agent/core/spool.py | tests/test_p5_agent_core.py | done |
-| REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12 | | | todo |
-| REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12 | | | todo |
-| REQ-1-10 | NEVER perform arbitrary remote command execution | §1.3 | P0–P12 | | | todo |
-| REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
+| REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12, T3 | backend/apps/policies/models.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_t3_browser_e2e.py | done |
+| REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12, T3 | agent/core/status.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_t3_browser_e2e.py | done |
+| REQ-1-10 | NEVER perform arbitrary remote command execution | §1.3 | P0–P12, T3 | backend/apps/devices/views.py | tests/test_t3_browser_e2e.py | done |
+| REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8, T3 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
 | REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
-| REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8 | backend/apps/analytics/views.py, frontend/src/components/ManagerTeamView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
-| REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1 | | | todo |
-| REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1 | | | todo |
-| REQ-2-7 | Tenant ID MUST be derived from authenticated membership — never from request body | §2.2, §3.2 | P1, P2 | | | todo |
+| REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8, T3 | backend/apps/analytics/views.py, frontend/src/components/ManagerTeamView.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
+| REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3, T3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t3_browser_e2e.py | done |
+| REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1, T3 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
+| REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1, T3 | backend/apps/tenancy/context.py, frontend/src/services/api.ts | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
+| REQ-2-7 | Tenant ID MUST be derived from authenticated membership — never from request body | §2.2, §3.2 | P1, P2, T3 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
 | REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | agent/core/sync.py, backend/apps/common/middleware.py | tests/test_p5_agent_core.py, tests/test_p10_security_observability_dr.py | done |
-| REQ-3-2 | MUST use per-device credentials (prefer public-key) | §3.2 | P2 | | | todo |
+| REQ-3-2 | MUST use per-device credentials (prefer public-key) | §3.2 | P2, T3 | backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t3_browser_e2e.py | done |
 | REQ-3-3 | MUST use tenant-scoped querysets, cache keys, and object keys | §3.2 | P1, P2, P3 | backend/apps/screenshots/storage.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1 | | | todo |
+| REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1, T3 | backend/apps/audit/models.py, frontend/src/components/AuditLogViewer.tsx | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
 | REQ-4-1 | Agent core MUST NOT import OS-specific modules | §4.1 | P5 | agent/core/ | tests/test_p5_agent_core.py | done |
 | REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | agent/core/scheduler.py, agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | agent/core/status.py, agent/adapters/windows/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
@@ -58,13 +56,13 @@
 | REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | backend/apps/common/models.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| REQ-7-2 | MUST use expand-then-contract schema changes | §7.1 | P1–P12 | | | todo |
+| REQ-7-2 | MUST use expand-then-contract schema changes | §7.1 | P1–P12 | backend/apps/ | scripts/check_migrations.py | done |
 | REQ-7-3 | CI MUST fail on destructive migrations without approved marker | §7.1 | P1 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-7-4 | Raw accepted events MUST be immutable | §7.2 | P2 | backend/apps/ingestion/models.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-8-1 | All API errors MUST return stable machine-readable codes with correlation ID | §8.1 | P2 | backend/apps/common/exceptions.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-8-2 | No error response MAY leak information about other tenants | §8.1 | P1, P2 | backend/apps/common/exceptions.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-8-3 | Authorization MUST be checked on every request and every Celery task | §3.2 | P1, P4 | backend/apps/rbac/permissions.py, backend/apps/analytics/tasks.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p4_analytics_timeline_reports.py | done |
-| REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1 | tests/test_p1_tenancy_rbac_audit.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| REQ-8-4 | Every endpoint MUST have negative authorization tests | §3.2 | P1, T3 | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
 | REQ-9-1 | Timeline reconstruction MUST be deterministic | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-9-2 | No overlapping intervals per device | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-9-3 | Gaps MUST be explicit unknowns — never filled or counted as activity | §9.1 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
@@ -73,10 +71,10 @@
 | REQ-10-1 | Screenshots MUST NOT be stored in MySQL — only object keys | §10.2 | P3 | backend/apps/screenshots/models.py, backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-10-2 | Object keys MUST be tenant-scoped and non-guessable | §10.2 | P3 | backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-10-3 | Every upload MUST be treated as untrusted (strict decode, type/dimension limits) | §10.2 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
+| REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3, T3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t3_browser_e2e.py | done |
 | REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | backend/apps/audit/models.py, backend/apps/audit/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py | done |
+| REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8, T3 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | docs/threat-model.md | tests/test_p10_security_observability_dr.py | done |
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-12-2 | Agent silence alerts MUST account for sleep and work hours | §12.2 | P10 | backend/apps/devices/alerts.py | tests/test_p10_security_observability_dr.py | done |
@@ -143,8 +141,8 @@
 | E42 | Employee leaves company | §13 | P1, P9 | backend/apps/tenancy/models.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E43 | Tenant suspended | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
 | E44 | Tenant deleted | §13 | P1, P9 | backend/apps/tenancy/context.py, backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_p9_billing_and_lifecycle.py | done |
-| E45 | Cross-tenant object ID guessed | §13 | P1 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py | done |
-| E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py | done |
+| E45 | Cross-tenant object ID guessed | §13 | P1, T3 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py, tests/test_t3_browser_e2e.py | done |
+| E46 | User in multiple tenants | §13 | P1, P8, T3 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t2_full_integration.py, tests/test_t3_browser_e2e.py | done |
 | E47 | Manager changes teams | §13 | P1, P8 | backend/apps/rbac/permissions.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E48 | Admin account compromised | §13 | P1, P10 | backend/apps/accounts/models.py, backend/apps/accounts/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E49 | Screenshot view URL leaked | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
@@ -189,7 +187,7 @@
 | E86 | Backup restore needed | §13 | P10 | scripts/dr/backup_mysql.py, scripts/dr/restore_mysql.py, scripts/dr/verify_db_storage_consistency.py | tests/test_p10_security_observability_dr.py | done |
 | E87 | Region or provider outage | §13 | P10 | backend/apps/common/views.py, docs/runbooks/disaster-recovery.md | tests/test_p10_security_observability_dr.py | done |
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py, backend/apps/common/logging.py | tests/test_p5_agent_core.py, tests/test_p10_security_observability_dr.py | done |
-| E89 | False positive or employee dispute | §13 | P8 | backend/apps/analytics/models.py, backend/apps/analytics/views.py, frontend/src/components/DisputeModal.tsx | tests/test_p8_dashboard_and_disputes.py | done |
+| E89 | False positive or employee dispute | §13 | P8, T3 | backend/apps/analytics/models.py, backend/apps/analytics/views.py, frontend/src/components/DisputeModal.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |
@@ -200,8 +198,8 @@
 | E96 | Battery saver or CPU pressure | §13 | P5 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
 | E97 | Offline beyond retention or quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, agent/core/lifecycle.py, agent/adapters/windows/adapter.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
-| E99 | Concurrent admin policy edits | §13 | P2, P8 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E100 | Support staff accesses customer data | §13 | P1 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
+| E99 | Concurrent admin policy edits | §13 | P2, P8, T3 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t3_browser_e2e.py | done |
+| E100 | Support staff accesses customer data | §13 | P1, T3 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py | done |
 
 ---
 

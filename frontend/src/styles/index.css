@@ -43,6 +43,11 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   font-family: var(--font-body);
   background: radial-gradient(circle at 15% 15%, #131b2e 0%, #0a0d14 60%);
@@ -243,6 +248,21 @@ h1, h2, h3, h4, h5 {
 }
 
 @media (max-width: 900px) {
+  .app-header {
+    height: auto;
+    min-height: 72px;
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .header-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .content-area {
+    padding: 1.25rem 1rem;
+    max-width: 100%;
+  }
   .grid-2, .grid-3, .grid-4 {
     grid-template-columns: 1fr;
   }
