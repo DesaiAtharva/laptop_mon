@@ -20,7 +20,7 @@
 | REQ-1-1 | MUST provide transparent, policy-driven, auditable monitoring | §1.1 | P0–P12 | | | todo |
 | REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | | | todo |
 | REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | | | todo |
-| REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | | | todo |
+| REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | | | todo |
 | REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | | | todo |
 | REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | | | todo |
@@ -30,13 +30,13 @@
 | REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8 | | | todo |
 | REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | | | todo |
 | REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8 | | | todo |
-| REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3 | | | todo |
+| REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1 | | | todo |
 | REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1 | | | todo |
 | REQ-2-7 | Tenant ID MUST be derived from authenticated membership — never from request body | §2.2, §3.2 | P1, P2 | | | todo |
 | REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | | | todo |
 | REQ-3-2 | MUST use per-device credentials (prefer public-key) | §3.2 | P2 | | | todo |
-| REQ-3-3 | MUST use tenant-scoped querysets, cache keys, and object keys | §3.2 | P1, P2, P3 | | | todo |
+| REQ-3-3 | MUST use tenant-scoped querysets, cache keys, and object keys | §3.2 | P1, P2, P3 | backend/apps/screenshots/storage.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1 | | | todo |
 | REQ-4-1 | Agent core MUST NOT import OS-specific modules | §4.1 | P5 | | | todo |
 | REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | | | todo |
@@ -54,7 +54,7 @@
 | REQ-5-7 | Corrupt SQLite MUST be quarantined; valid records recovered | §5.3 | P5 | | | todo |
 | REQ-6-1 | Agent MUST delete local data ONLY after confirmed acceptance | §6.1 | P5 | | | todo |
 | REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | | | todo |
+| REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | backend/apps/common/models.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | REQ-7-2 | MUST use expand-then-contract schema changes | §7.1 | P1–P12 | | | todo |
 | REQ-7-3 | CI MUST fail on destructive migrations without approved marker | §7.1 | P1 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -68,12 +68,12 @@
 | REQ-9-3 | Gaps MUST be explicit unknowns — never filled or counted as activity | §9.1 | P4 | | | todo |
 | REQ-9-4 | Impossible sequences MUST be normalized, recorded as anomalies, never produce negative durations | §9.1 | P4 | | | todo |
 | REQ-9-5 | Daily metrics MUST have a unique grain; recalculation MUST be idempotent | §9.3 | P4 | | | todo |
-| REQ-10-1 | Screenshots MUST NOT be stored in MySQL — only object keys | §10.2 | P3 | | | todo |
-| REQ-10-2 | Object keys MUST be tenant-scoped and non-guessable | §10.2 | P3 | | | todo |
-| REQ-10-3 | Every upload MUST be treated as untrusted (strict decode, type/dimension limits) | §10.2 | P3 | | | todo |
-| REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3 | | | todo |
+| REQ-10-1 | Screenshots MUST NOT be stored in MySQL — only object keys | §10.2 | P3 | backend/apps/screenshots/models.py, backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
+| REQ-10-2 | Object keys MUST be tenant-scoped and non-guessable | §10.2 | P3 | backend/apps/screenshots/storage.py | tests/test_p3_screenshots_storage_retention.py | done |
+| REQ-10-3 | Every upload MUST be treated as untrusted (strict decode, type/dimension limits) | §10.2 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| REQ-10-4 | View URLs MUST be short-lived, scoped to one object, and every view audited | §10.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-11-1 | Audit log MUST record actor, action, resource, timestamp, request ID for all listed events | §11.1 | P1 | backend/apps/audit/models.py, backend/apps/audit/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | | | todo |
+| REQ-11-2 | Legal hold MUST prevent deletion of eligible data | §11.2 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-11-3 | Employee self-view MUST show own monitoring state, policy, and data collected | §11.3 | P8 | | | todo |
 | REQ-11-4 | Each threat in threat model MUST have an automated or documented test | §11.4 | P10 | | | todo |
 | REQ-12-1 | Agent heartbeat MUST include all signals in §12.1 | §12.1 | P2, P5 | backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
@@ -143,13 +143,13 @@
 | E46 | User in multiple tenants | §13 | P1, P8 | backend/apps/tenancy/context.py, backend/apps/tenancy/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E47 | Manager changes teams | §13 | P1, P8 | backend/apps/rbac/permissions.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
 | E48 | Admin account compromised | §13 | P1, P10 | backend/apps/accounts/models.py, backend/apps/accounts/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E49 | Screenshot view URL leaked | §13 | P3 | | | todo |
-| E50 | Malicious uploaded file | §13 | P3 | | | todo |
-| E51 | Screenshot upload partially completes | §13 | P3 | | | todo |
-| E52 | Upload succeeded, finalize failed | §13 | P3 | | | todo |
-| E53 | Finalize succeeded, response lost | §13 | P3 | | | todo |
-| E54 | Retention job fails | §13 | P3 | | | todo |
-| E55 | Screenshot exclusion rule added | §13 | P3 | | | todo |
+| E49 | Screenshot view URL leaked | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E50 | Malicious uploaded file | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E51 | Screenshot upload partially completes | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E52 | Upload succeeded, finalize failed | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E54 | Retention job fails | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
+| E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | | | todo |
 | E57 | Screen locked | §13 | P6 | | | todo |
 | E58 | Sleep, hibernate and wake | §13 | P4, P6 | | | todo |
@@ -184,7 +184,7 @@
 | E87 | Region or provider outage | §13 | P10 | | | todo |
 | E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | | | todo |
 | E89 | False positive or employee dispute | §13 | P8 | | | todo |
-| E90 | Legal retention or deletion request | §13 | P3 | | | todo |
+| E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | | | todo |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | | | todo |
 | E93 | Monotonic clock reset after reboot | §13 | P5 | | | todo |

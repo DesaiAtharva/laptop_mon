@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.devices",
     "apps.policies",
     "apps.ingestion",
+    "apps.screenshots",
 ]
 
 MIDDLEWARE = [
@@ -164,3 +165,18 @@ SECURE_BROWSER_XSS_FILTER = True
 
 # Support Access Defaults
 SUPPORT_ACCESS_MAX_HOURS = 8
+
+# Object Storage Configuration (§10.2, REQ-10-1)
+SCREENSHOT_STORAGE_BACKEND = os.environ.get(
+    "SCREENSHOT_STORAGE_BACKEND", "apps.screenshots.storage.MemoryObjectStorageBackend"
+)
+SCREENSHOT_STORAGE_BUCKET = os.environ.get("SCREENSHOT_STORAGE_BUCKET", "laptop-mon-screenshots")
+SCREENSHOT_STORAGE_ENDPOINT = os.environ.get("SCREENSHOT_STORAGE_ENDPOINT", "http://127.0.0.1:9000")
+SCREENSHOT_STORAGE_ACCESS_KEY = os.environ.get("SCREENSHOT_STORAGE_ACCESS_KEY", "minioadmin")
+SCREENSHOT_STORAGE_SECRET_KEY = os.environ.get("SCREENSHOT_STORAGE_SECRET_KEY", "minioadmin")
+SCREENSHOT_STORAGE_REGION = os.environ.get("SCREENSHOT_STORAGE_REGION", "us-east-1")
+SCREENSHOT_VIEW_URL_EXPIRY_SECONDS = int(os.environ.get("SCREENSHOT_VIEW_URL_EXPIRY_SECONDS", "300"))
+SCREENSHOT_UPLOAD_INTENT_EXPIRY_SECONDS = int(os.environ.get("SCREENSHOT_UPLOAD_INTENT_EXPIRY_SECONDS", "900"))
+SCREENSHOT_MAX_FILE_SIZE_BYTES = int(os.environ.get("SCREENSHOT_MAX_FILE_SIZE_BYTES", str(10 * 1024 * 1024)))
+SCREENSHOT_MAX_WIDTH = 7680
+SCREENSHOT_MAX_HEIGHT = 4320

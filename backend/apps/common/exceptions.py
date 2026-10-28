@@ -24,6 +24,24 @@ class ApplicationConflict(APIException):
     default_code = "conflict"
 
 
+class ApplicationError(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Application error occurred."
+    default_code = "bad_request"
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        code: Optional[str] = None,
+        status_code: Optional[int] = None,
+        field_errors: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if status_code is not None:
+            self.status_code = status_code
+        super().__init__(detail=message or self.default_detail, code=code or self.default_code)
+        self.field_errors = field_errors or {}
+
+
 class TenantSuspended(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = "Tenant is currently suspended."
@@ -56,6 +74,28 @@ class RateLimitedException(APIException):
     def __init__(self, detail: Optional[str] = None, retry_after: int = 60) -> None:
         super().__init__(detail=detail)
         self.retry_after = retry_after
+
+
+class UnprocessableEntity(APIException):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    default_detail = "Unprocessable entity."
+    default_code = "unprocessable_entity"
+
+    def __init__(
+        self,
+        message: Optional[str] = None,
+        code: Optional[str] = None,
+        field_errors: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(detail=message or self.default_detail, code=code or self.default_code)
+        self.field_errors = field_errors or {}
+
+
+class EntityNotFound(NotFound):
+    default_code = "not_found"
+
+    def __init__(self, message: Optional[str] = None, code: Optional[str] = None) -> None:
+        super().__init__(detail=message or "Resource not found.", code=code or self.default_code)
 
 
 
@@ -132,6 +172,9 @@ def custom_exception_handler(exc: Exception, context: Dict[str, Any]) -> Optiona
             message = str(message)
     else:
         message = str(exc)
+
+    if hasattr(exc, "field_errors") and getattr(exc, "field_errors"):
+        field_errors = getattr(exc, "field_errors")
 
     formatted_data = {
         "code": code,
