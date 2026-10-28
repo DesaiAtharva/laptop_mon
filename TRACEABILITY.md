@@ -21,38 +21,38 @@
 | REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
 | REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
-| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | | | todo |
+| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
 | REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | | | todo |
-| REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | | | todo |
+| REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | agent/core/journal.py, agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12 | | | todo |
 | REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12 | | | todo |
 | REQ-1-10 | NEVER perform arbitrary remote command execution | §1.3 | P0–P12 | | | todo |
 | REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8 | | | todo |
-| REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | | | todo |
+| REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
 | REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8 | | | todo |
 | REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1 | | | todo |
 | REQ-2-6 | Multi-tenant users MUST send explicit tenant context validated on every request | §2.2 | P1 | | | todo |
 | REQ-2-7 | Tenant ID MUST be derived from authenticated membership — never from request body | §2.2, §3.2 | P1, P2 | | | todo |
-| REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | | | todo |
+| REQ-3-1 | MUST use TLS on all transport, never disabled | §3.2 | P5, P10 | agent/core/sync.py | tests/test_p5_agent_core.py | done |
 | REQ-3-2 | MUST use per-device credentials (prefer public-key) | §3.2 | P2 | | | todo |
 | REQ-3-3 | MUST use tenant-scoped querysets, cache keys, and object keys | §3.2 | P1, P2, P3 | backend/apps/screenshots/storage.py, backend/apps/screenshots/models.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-3-4 | Audit log MUST be append-only at application level | §3.2 | P1 | | | todo |
-| REQ-4-1 | Agent core MUST NOT import OS-specific modules | §4.1 | P5 | | | todo |
-| REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | | | todo |
-| REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | | | todo |
-| REQ-4-4 | Monitoring state MUST remain discoverable when UI is closed | §4.3 | P5 | | | todo |
+| REQ-4-1 | Agent core MUST NOT import OS-specific modules | §4.1 | P5 | agent/core/ | tests/test_p5_agent_core.py | done |
+| REQ-4-2 | Agent MUST separate capture from upload using bounded queues | §4.3 | P5 | agent/core/scheduler.py, agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| REQ-4-3 | Closing tray UI MUST NOT stop capture | §4.3 | P5, P6 | agent/core/status.py | tests/test_p5_agent_core.py | done |
+| REQ-4-4 | Monitoring state MUST remain discoverable when UI is closed | §4.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
 | REQ-4-5 | Updater MUST verify hash and signature before applying update | §4.4 | P7 | | | todo |
 | REQ-4-6 | Updater MUST rollback on any failure | §4.4 | P7 | | | todo |
 | REQ-4-7 | Updater MUST NOT update during shutdown | §4.4 | P7 | | | todo |
-| REQ-5-1 | Agent MUST start offline under a valid cached policy | §5.1 | P5 | | | todo |
-| REQ-5-2 | Agent MUST drop screenshots before event journal when space is tight | §5.1 | P5 | | | todo |
-| REQ-5-3 | Agent MUST write explicit gap events — never silently delete data | §5.1 | P5 | | | todo |
-| REQ-5-4 | Shutdown MUST be bounded — never wait on network | §5.2 | P5 | | | todo |
-| REQ-5-5 | Unclean shutdown MUST be detected and write a gap event on next start | §5.2 | P5 | | | todo |
-| REQ-5-6 | Crash loop MUST have a circuit breaker with backoff | §5.3 | P5 | | | todo |
-| REQ-5-7 | Corrupt SQLite MUST be quarantined; valid records recovered | §5.3 | P5 | | | todo |
-| REQ-6-1 | Agent MUST delete local data ONLY after confirmed acceptance | §6.1 | P5 | | | todo |
+| REQ-5-1 | Agent MUST start offline under a valid cached policy | §5.1 | P5 | agent/core/policy.py | tests/test_p5_agent_core.py | done |
+| REQ-5-2 | Agent MUST drop screenshots before event journal when space is tight | §5.1 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
+| REQ-5-3 | Agent MUST write explicit gap events — never silently delete data | §5.1 | P5 | agent/core/journal.py, agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| REQ-5-4 | Shutdown MUST be bounded — never wait on network | §5.2 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| REQ-5-5 | Unclean shutdown MUST be detected and write a gap event on next start | §5.2 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| REQ-5-6 | Crash loop MUST have a circuit breaker with backoff | §5.3 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| REQ-5-7 | Corrupt SQLite MUST be quarantined; valid records recovered | §5.3 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| REQ-6-1 | Agent MUST delete local data ONLY after confirmed acceptance | §6.1 | P5 | agent/core/journal.py, agent/core/sync.py | tests/test_p5_agent_core.py | done |
 | REQ-6-2 | Every retry MUST be idempotent | §6.1 | P2, P3, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-6-3 | Screenshot upload MUST be two-phase (intent + complete) and idempotent | §6.2 | P3, P5 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | REQ-7-1 | All models MUST use InnoDB utf8mb4, UUID public IDs, UTC timestamps | §7.1 | P1 | backend/apps/common/models.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -95,28 +95,28 @@
 
 | ID | Edge Case | Spec Section | Prompt | Code Path | Test Path | Status |
 |---|---|---|---|---|---|---|
-| E01 | No internet at startup | §13 | P5 | | | todo |
+| E01 | No internet at startup | §13 | P5 | agent/core/policy.py | tests/test_p5_agent_core.py | done |
 | E02 | Connection lost mid-upload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E03 | Batch committed but response lost | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E04 | DNS failure or captive portal | §13 | P5 | | | todo |
-| E05 | Proxy, VPN or firewall blocks API | §13 | P5 | | | todo |
-| E06 | TLS certificate invalid or expired | §13 | P5, P10 | | | todo |
-| E07 | Shutdown while online | §13 | P5 | | | todo |
-| E08 | Hard power loss | §13 | P5 | | | todo |
-| E09 | Agent killed during SQLite write | §13 | P5 | | | todo |
-| E10 | Agent crashes repeatedly | §13 | P5 | | | todo |
-| E11 | UI closed, agent continues | §13 | P5 | | | todo |
-| E12 | Employee explicitly exits monitoring | §13 | P5 | | | todo |
-| E13 | Uninstall with pending data | §13 | P5, P7 | | | todo |
+| E04 | DNS failure or captive portal | §13 | P5 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
+| E05 | Proxy, VPN or firewall blocks API | §13 | P5 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
+| E06 | TLS certificate invalid or expired | §13 | P5, P10 | agent/core/sync.py | tests/test_p5_agent_core.py | done |
+| E07 | Shutdown while online | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| E08 | Hard power loss | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| E09 | Agent killed during SQLite write | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| E10 | Agent crashes repeatedly | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
+| E11 | UI closed, agent continues | §13 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
+| E12 | Employee explicitly exits monitoring | §13 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
+| E13 | Uninstall with pending data | §13 | P5, P7 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
 | E14 | OS update or reboot | §13 | P7, P11 | | | todo |
 | E15 | Agent update interrupted | §13 | P7 | | | todo |
 | E16 | Agent and server version mismatch | §13 | P2, P7 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E17 | Local disk full | §13 | P5 | | | todo |
-| E18 | Local queue reaches quota | §13 | P5 | | | todo |
-| E19 | SQLite corrupt | §13 | P5 | | | todo |
-| E20 | Screenshot file without DB row | §13 | P5 | | | todo |
-| E21 | DB row without screenshot file | §13 | P5 | | | todo |
-| E22 | Encryption key unavailable | §13 | P5, P12 | | | todo |
+| E17 | Local disk full | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
+| E18 | Local queue reaches quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| E19 | SQLite corrupt | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| E20 | Screenshot file without DB row | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
+| E21 | DB row without screenshot file | §13 | P5 | agent/core/spool.py | tests/test_p5_agent_core.py | done |
+| E22 | Encryption key unavailable | §13 | P5, P12 | agent/core/crypto.py | tests/test_p5_agent_core.py | done |
 | E23 | Device reimaged or profile deleted | §13 | P2, P5 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E24 | Device stolen | §13 | P2 | backend/apps/devices/authentication.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E25 | Device clock far off | §13 | P2, P4, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
@@ -131,8 +131,8 @@
 | E34 | Oversized batch | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E35 | Rate limit or overload | §13 | P2, P5 | backend/apps/ingestion/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E36 | Partial batch acceptance | §13 | P2, P5 | backend/apps/ingestion/services.py, backend/apps/ingestion/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E37 | Policy changed while offline | §13 | P2, P5 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
-| E38 | Device revoked while offline | §13 | P2, P5 | backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E37 | Policy changed while offline | §13 | P2, P5 | backend/apps/policies/models.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
+| E38 | Device revoked while offline | §13 | P2, P5 | backend/apps/devices/authentication.py, agent/core/policy.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
 | E39 | Enrollment token reused or expired | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E40 | Device credential leaked | §13 | P2 | backend/apps/devices/models.py, backend/apps/devices/authentication.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E41 | Employee moved to another team | §13 | P1, P8 | backend/apps/tenancy/views.py, backend/apps/tenancy/services.py | tests/test_p1_tenancy_rbac_audit.py | done |
@@ -150,10 +150,10 @@
 | E53 | Finalize succeeded, response lost | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E54 | Retention job fails | §13 | P3 | backend/apps/screenshots/services.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E55 | Screenshot exclusion rule added | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
-| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | | | todo |
+| E56 | OS permission denied or revoked | §13 | P5, P6, P11, P12 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
 | E57 | Screen locked | §13 | P6 | | | todo |
 | E58 | Sleep, hibernate and wake | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E59 | Fast user switching | §13 | P5, P6, P11 | | | todo |
+| E59 | Fast user switching | §13 | P5, P6, P11 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
 | E60 | Remote desktop or VDI | §13 | P6, P12 | | | todo |
 | E61 | Multiple monitors and topology changes | §13 | P6, P11 | | | todo |
 | E62 | Wayland and X11 capability mismatch | §13 | P12 | | | todo |
@@ -161,8 +161,8 @@
 | E64 | Windows secure desktop or UAC | §13 | P6 | | | todo |
 | E65 | Linux headless or unsupported desktop | §13 | P12 | | | todo |
 | E66 | App identifier unavailable | §13 | P4, P6 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E67 | Window title has sensitive data | §13 | P5, P6 | | | todo |
-| E68 | Screenshot has sensitive data | §13 | P5, P6 | | | todo |
+| E67 | Window title has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py | tests/test_p5_agent_core.py | done |
+| E68 | Screenshot has sensitive data | §13 | P5, P6 | agent/core/privacy_filter.py | tests/test_p5_agent_core.py | done |
 | E69 | App classification changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E70 | Idle threshold changes | §13 | P4, P8 | backend/apps/analytics/metrics.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E71 | Session never receives end event | §13 | P4 | backend/apps/analytics/timeline.py | tests/test_p4_analytics_timeline_reports.py | done |
@@ -182,17 +182,17 @@
 | E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E86 | Backup restore needed | §13 | P10 | | | todo |
 | E87 | Region or provider outage | §13 | P10 | | | todo |
-| E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | | | todo |
+| E88 | Logs or crash dumps contain secrets | §13 | P5, P10 | agent/core/diagnostics.py | tests/test_p5_agent_core.py | done |
 | E89 | False positive or employee dispute | §13 | P8 | | | todo |
 | E90 | Legal retention or deletion request | §13 | P3 | backend/apps/screenshots/services.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py | done |
 | E91 | Untrusted local administrator tampers | §13 | P7 | | | todo |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | | | todo |
-| E93 | Monotonic clock reset after reboot | §13 | P5 | | | todo |
+| E93 | Monotonic clock reset after reboot | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
 | E94 | Compression differs by OS | §13 | P5 | | | todo |
 | E95 | Very large multi-monitor capture | §13 | P6 | | | todo |
-| E96 | Battery saver or CPU pressure | §13 | P5 | | | todo |
-| E97 | Offline beyond retention or quota | §13 | P5 | | | todo |
-| E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, backend/apps/devices/views.py | tests/test_p2_devices_policies_ingestion.py | done |
+| E96 | Battery saver or CPU pressure | §13 | P5 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
+| E97 | Offline beyond retention or quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
+| E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, agent/core/lifecycle.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py | done |
 | E99 | Concurrent admin policy edits | §13 | P2, P8 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py | done |
 | E100 | Support staff accesses customer data | §13 | P1 | backend/apps/support_access/models.py, backend/apps/support_access/views.py | tests/test_p1_tenancy_rbac_audit.py | done |
 

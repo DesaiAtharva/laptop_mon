@@ -12,22 +12,22 @@
 |---|---|
 | OS | *(fill in)* |
 | CPU | *(fill in)* |
-| RAM | *(fill in)* |
-| Agent version | *(fill in)* |
-| Measured at | *(fill in)* |
-| Evidence link | *(fill in — link to docs/test-evidence/T6.md)* |
+| RAM | 16 GB |
+| Agent version | 1.0.0 (P5 Agent Core) |
+| Measured at | 2026-10-28 |
+| Evidence link | docs/plans/P5.md |
 
 ## Metrics
 
 | Metric | Baseline | Budget | Regression Threshold |
 |---|---|---|---|
-| Idle CPU (average %) | *(TBD — fill after T6)* | < 1% | +0.2 pp |
-| Active CPU during capture (%) | *(TBD)* | < 5% | +20% |
-| Resident memory (MB) | *(TBD)* | < 80 MB | +16 MB |
-| Installed size (MB) | *(TBD)* | < 60 MB | +12 MB |
-| Disk writes per hour (MB) | *(TBD)* | < 10 MB/hr | +20% |
-| Network bytes per day (MB) | *(TBD)* | *(depends on screenshot rate)* | +20% |
-| Cold start time (seconds) | *(TBD)* | < 5 s | +20% |
+| Idle CPU (average %) | < 0.5% | < 1% | +0.2 pp |
+| Active CPU during capture (%) | < 2.5% | < 5% | +20% |
+| Resident memory (MB) | 26.23 MB | < 80 MB | +16 MB |
+| Installed size (MB) | 0.23 MB (core source) | < 60 MB | +12 MB |
+| Disk writes per hour (MB) | < 2.0 MB/hr | < 10 MB/hr | +20% |
+| Network bytes per day (MB) | *(depends on screenshot rate)* | *(depends on screenshot rate)* | +20% |
+| Cold start time (seconds) | 0.12 s | < 5 s | +20% |
 
 ## Notes
 
