@@ -317,3 +317,10 @@ class AgentScheduler:
             self.sync_worker.send_heartbeat(hb_payload)
 
         return synced_events
+
+    def step(self) -> None:
+        """Executes a single scheduler iteration across all event, idle, screenshot, and sync ticks."""
+        self.step_foreground_tick()
+        self.step_idle_tick()
+        self.step_screenshot_tick()
+        self.step_sync_tick()

@@ -21,7 +21,7 @@
 | REQ-1-2 | MUST capture foreground application usage | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-3 | MUST capture session activity (active/idle/locked) | §1.1 | P4, P5, P6 | backend/apps/analytics/timeline.py, agent/adapters/windows/adapter.py | tests/test_p4_analytics_timeline_reports.py, tests/test_p6_windows_adapter.py | done |
 | REQ-1-4 | MUST capture periodic screenshots | §1.1 | P3, P5, P6 | backend/apps/screenshots/services.py, agent/adapters/windows/adapter.py | tests/test_p3_screenshots_storage_retention.py, tests/test_p6_windows_adapter.py | done |
-| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p12_linux_adapter.py | done |
+| REQ-1-5 | MUST operate as a lightweight agent respecting OS permissions | §1.1 | P5, P6, P11, P12, T6 | agent/core/scheduler.py, agent/adapters/windows/adapter.py, agent/adapters/linux/adapter.py | tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py, tests/test_p12_linux_adapter.py, tests/test_t6_perf_load_footprint.py | done |
 | REQ-1-6 | MUST support Windows (primary), macOS, and Linux | §1.2 | P6, P11, P12 | agent/adapters/windows/, agent/adapters/macos/, agent/adapters/linux/ | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
 | REQ-1-7 | MUST support full offline operation with durable local queuing | §1.2 | P5 | agent/core/journal.py, agent/core/spool.py | tests/test_p5_agent_core.py | done |
 | REQ-1-8 | NEVER do keylogging, password capture, or private-message scraping | §1.3 | P0–P12, T3 | backend/apps/policies/models.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_t3_browser_e2e.py | done |
@@ -177,10 +177,10 @@
 | E76 | Celery or Redis unavailable | §13 | P4 | backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E77 | MySQL failover or deadlock | §13 | P4, P10 | backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py | done |
 | E78 | Database migration fails | §13 | P1, P10 | scripts/check_migrations.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E79 | Connection pool exhausted | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E79 | Connection pool exhausted | §13 | P4, T6 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py, tests/test_t6_perf_load_footprint.py | done |
 | E80 | Stale or cross-tenant cache | §13 | P1, P10 | backend/apps/common/cache.py | tests/test_p1_tenancy_rbac_audit.py | done |
-| E81 | Report query too large | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
-| E82 | Export exceeds limits | §13 | P4 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py | done |
+| E81 | Report query too large | §13 | P4, T6 | backend/apps/analytics/views.py | tests/test_p4_analytics_timeline_reports.py, tests/test_t6_perf_load_footprint.py | done |
+| E82 | Export exceeds limits | §13 | P4, T6 | backend/apps/analytics/views.py, backend/apps/analytics/tasks.py | tests/test_p4_analytics_timeline_reports.py, tests/test_t6_perf_load_footprint.py | done |
 | E83 | Invitation email delivery fails | §13 | P9 | backend/apps/tenancy/services.py, backend/apps/tenancy/views.py | tests/test_p9_billing_and_lifecycle.py | done |
 | E84 | Payment webhook duplicated or out of order | §13 | P9 | backend/apps/billing/services.py, backend/apps/billing/views.py | tests/test_p9_billing_and_lifecycle.py | done |
 | E85 | Subscription limit reached | §13 | P2, P9 | backend/apps/billing/services.py, backend/apps/devices/services.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p9_billing_and_lifecycle.py | done |
@@ -192,10 +192,10 @@
 | E91 | Untrusted local administrator tampers | §13 | P7 | agent/core/updater.py, docs/LIMITATIONS.md | tests/test_p7_updater_packaging.py | limitation |
 | E92 | Agent disabled by antivirus or EDR | §13 | P6, P7 | agent/adapters/windows/adapter.py, docs/test-evidence/windows.md | tests/test_p6_windows_adapter.py | done |
 | E93 | Monotonic clock reset after reboot | §13 | P5 | agent/core/lifecycle.py | tests/test_p5_agent_core.py | done |
-| E94 | Compression differs by OS | §13 | P5, P12 | agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py, agent/adapters/linux/adapter.py | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py | done |
+| E94 | Compression differs by OS | §13 | P5, P12, T6 | agent/adapters/windows/adapter.py, agent/adapters/macos/adapter.py, agent/adapters/linux/adapter.py | tests/test_p6_windows_adapter.py, tests/test_p11_macos_adapter.py, tests/test_p12_linux_adapter.py, tests/test_t6_perf_load_footprint.py | done |
 
 | E95 | Very large multi-monitor capture | §13 | P6 | agent/adapters/windows/adapter.py | tests/test_p6_windows_adapter.py | done |
-| E96 | Battery saver or CPU pressure | §13 | P5 | agent/core/scheduler.py | tests/test_p5_agent_core.py | done |
+| E96 | Battery saver or CPU pressure | §13 | P5, T6 | agent/core/scheduler.py | tests/test_p5_agent_core.py, tests/test_t6_perf_load_footprint.py | done |
 | E97 | Offline beyond retention or quota | §13 | P5 | agent/core/journal.py | tests/test_p5_agent_core.py | done |
 | E98 | User changes OS account | §13 | P2, P5, P6 | backend/apps/devices/models.py, agent/core/lifecycle.py, agent/adapters/windows/adapter.py | tests/test_p2_devices_policies_ingestion.py, tests/test_p5_agent_core.py, tests/test_p6_windows_adapter.py | done |
 | E99 | Concurrent admin policy edits | §13 | P2, P8, T3 | backend/apps/policies/models.py, backend/apps/policies/views.py | tests/test_p2_devices_policies_ingestion.py, tests/test_t3_browser_e2e.py | done |
@@ -210,8 +210,8 @@
 | AC-1 | All test suites pass (T1–T7) | T8 | | todo |
 | AC-2 | check_traceability.py --final passes | T8 | | todo |
 | AC-3 | Every E01–E100 has code and passing test or documented limitation | T7 | | todo |
-| AC-4 | Agent footprint within budget (≤ 20% regression from baseline) | T6 | | todo |
-| AC-5 | No cross-tenant data leak | T5 | | todo |
+| AC-4 | Agent footprint within budget (≤ 20% regression from baseline) | T6 | docs/test-evidence/T6.md, docs/perf/BASELINE.md | done |
+| AC-5 | No cross-tenant data leak | T5 | docs/test-evidence/T5.md | done |
 | AC-6 | Restore drill completed with RTO/RPO evidence | T4, T8 | | todo |
 | AC-7 | RELEASE_READINESS.md produced and reviewed | T8 | | todo |
 
