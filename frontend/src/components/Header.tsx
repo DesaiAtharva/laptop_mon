@@ -1,6 +1,5 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-import { MembershipRole } from "../types";
 
 export const Header: React.FC = () => {
   const {
@@ -8,7 +7,6 @@ export const Header: React.FC = () => {
     activeTenant,
     setActiveTenant,
     role,
-    setRole,
     timezonePref,
     setTimezonePref,
     userName,
@@ -108,21 +106,7 @@ export const Header: React.FC = () => {
           🌐 {timezonePref === "local" ? "Local Time" : "UTC"}
         </button>
 
-        {/* Perspective switcher (available for admin/superuser to preview employee/manager perspectives) */}
-        {(user?.is_superuser || role === "admin" || role === "manager") && (
-          <select
-            className="tenant-select"
-            style={{ borderColor: "var(--border-glow)", color: "var(--accent-cyan)", fontSize: "0.8rem" }}
-            value={role}
-            onChange={(e) => setRole(e.target.value as MembershipRole)}
-            title="Switch view perspective for auditing and preview"
-          >
-            <option value="admin">Perspective: Org Admin</option>
-            <option value="manager">Perspective: Manager</option>
-            <option value="employee">Perspective: Employee</option>
-            <option value="auditor">Perspective: Auditor</option>
-          </select>
-        )}
+
 
         {/* Authenticated User Profile */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "8px" }}>
