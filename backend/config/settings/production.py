@@ -6,7 +6,9 @@ DEBUG = False
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
-SECURE_SSL_REDIRECT = True
+# SSL & Proxy Termination settings
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = False  # Enforced directly by edge Nginx reverse proxy
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 31536000

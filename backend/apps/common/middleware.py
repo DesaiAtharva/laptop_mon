@@ -59,9 +59,9 @@ class SecurityHeadersMiddleware:
         response["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: blob:; "
-            "font-src 'self'; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
             "connect-src 'self'; "
             "frame-ancestors 'none';"
         )
