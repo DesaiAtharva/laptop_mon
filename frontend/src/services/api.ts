@@ -9,11 +9,16 @@ import {
 } from "../types";
 
 let currentTenantId: string = "";
-let currentToken: string = "mock-bearer-token";
+let currentToken: string = "";
 
 export function setApiAuth(token: string, tenantId: string): void {
   currentToken = token;
   currentTenantId = tenantId;
+}
+
+export function clearApiAuth(): void {
+  currentToken = "";
+  currentTenantId = "";
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -393,6 +398,31 @@ export const api = {
           created_at: new Date(Date.now() - 3600000).toISOString(),
         },
       ];
+    }
+  },
+
+  // ── Authentication (Production Login & Session Management) ─────────────
+  async login(email: string, password: string): Promise<{
+    token: string;
+    user: { id: string; email: string; name: string; role: any; is_superuser: boolean };
+    tenant: Tenant | null;
+    tenants: Tenant[];
+    expires_at: string;
+  }> {
+    return await request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await request("/auth/session/revoke", {
+        method: "POST",
+        body: JSON.stringify({ all: false }),
+      });
+    } catch (e) {
+      console.warn("Logout session revoke warning:", e);
     }
   },
 

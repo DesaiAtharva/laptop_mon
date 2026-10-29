@@ -603,3 +603,71 @@ class P1TenancyRBACAuditTests(TestCase):
         )
         self.assertEqual(resp2.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(resp2.json()["code"], "conflict")
+
+    # ── Password Login Tests (Production Login) ───────────────────────────────
+    def test_password_login_success(self) -> None:
+        """Valid credentials return a session token, user details, and active tenant."""
+        user = User.objects.create_user(
+            email="prod.user@acme.com",
+            password="SecurePassword123!",
+            name="Prod User",
+        )
+        Membership.objects.create(
+            tenant=self.tenant_a,
+            user=user,
+            role=MembershipRole.ADMIN,
+            status=MembershipStatus.ACTIVE,
+        )
+
+        response = self.client.post(
+            "/api/auth/login",
+            data={"email": "prod.user@acme.com", "password": "SecurePassword123!"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertIn("token", data)
+        self.assertEqual(data["user"]["email"], "prod.user@acme.com")
+        self.assertEqual(data["tenant"]["id"], str(self.tenant_a.id))
+        self.assertEqual(data["user"]["role"], "admin")
+
+    def test_password_login_invalid_credentials(self) -> None:
+        """Invalid password or unknown email returns 401 Unauthorized."""
+        User.objects.create_user(
+            email="existing@acme.com",
+            password="CorrectPassword123!",
+            name="Existing User",
+        )
+
+        # Wrong password
+        resp_wrong_pw = self.client.post(
+            "/api/auth/login",
+            data={"email": "existing@acme.com", "password": "WrongPassword"},
+            format="json",
+        )
+        self.assertEqual(resp_wrong_pw.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # Unknown email
+        resp_unknown = self.client.post(
+            "/api/auth/login",
+            data={"email": "unknown@acme.com", "password": "AnyPassword"},
+            format="json",
+        )
+        self.assertEqual(resp_unknown.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_password_login_disabled_account(self) -> None:
+        """Disabled user account cannot authenticate and returns 403 Forbidden."""
+        User.objects.create_user(
+            email="disabled@acme.com",
+            password="SomePassword123!",
+            name="Disabled User",
+            is_active=False,
+        )
+
+        response = self.client.post(
+            "/api/auth/login",
+            data={"email": "disabled@acme.com", "password": "SomePassword123!"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+

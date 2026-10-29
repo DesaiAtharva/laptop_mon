@@ -3,6 +3,7 @@ import { AdminDashboard } from "./components/AdminDashboard";
 import { AuditLogViewer } from "./components/AuditLogViewer";
 import { EmployeeSelfView } from "./components/EmployeeSelfView";
 import { Header } from "./components/Header";
+import { Login } from "./components/Login";
 import { ManagerTeamView } from "./components/ManagerTeamView";
 import { ScreenshotGallery } from "./components/ScreenshotGallery";
 import { useAuth } from "./context/AuthContext";
@@ -10,7 +11,7 @@ import { useAuth } from "./context/AuthContext";
 type TabKey = "self-view" | "team-view" | "admin" | "screenshots" | "audit";
 
 export const App: React.FC = () => {
-  const { role } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>("self-view");
 
   // Automatically adjust default view when role switcher changes
@@ -20,6 +21,11 @@ export const App: React.FC = () => {
     else if (role === "admin") setActiveTab("admin");
     else if (role === "auditor") setActiveTab("audit");
   }, [role]);
+
+  // If unauthenticated, present production login portal
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
     <div className="app-container">

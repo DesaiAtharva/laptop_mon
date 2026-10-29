@@ -34,9 +34,13 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
 
         token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
-        try:
-            session = UserSession.objects.select_related("user").get(token_hash=token_hash)
-        except UserSession.DoesNotExist:
+        session = (
+            UserSession.objects.select_related("user")
+            .filter(token_hash=token_hash)
+            .order_by("-created_at")
+            .first()
+        )
+        if not session:
             raise exceptions.AuthenticationFailed("Invalid or expired session token.")
 
         if session.revoked_at is not None:

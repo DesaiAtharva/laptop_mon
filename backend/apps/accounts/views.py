@@ -14,6 +14,114 @@ from apps.accounts.serializers import OIDCCallbackSerializer, SessionRevokeSeria
 from apps.common.exceptions import MFARequired
 
 
+class PasswordLoginView(APIView):
+    """Email and password authentication endpoint for production login."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        email = request.data.get("email", "").strip().lower()
+        password = request.data.get("password", "")
+
+        if not email or not password:
+            return Response(
+                {"code": "invalid_credentials", "message": "Email and password are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"code": "invalid_credentials", "message": "Invalid email or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"code": "invalid_credentials", "message": "Invalid email or password."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not user.is_active:
+            return Response(
+                {"code": "account_disabled", "message": "User account is disabled."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        ip_address = request.META.get("REMOTE_ADDR")
+        user_agent = request.META.get("HTTP_USER_AGENT", "")
+
+        session, raw_token = UserSession.create_session(
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        from apps.tenancy.models import Membership, Tenant
+        memberships = list(
+            Membership.objects.filter(user=user, status="active").select_related("tenant")
+        )
+
+        tenant_data = None
+        role = "admin" if (user.is_superuser or user.is_staff) else "employee"
+        tenants_list = []
+
+        for m in memberships:
+            t_dict = {
+                "id": str(m.tenant.id),
+                "name": m.tenant.name,
+                "role": m.role,
+                "status": m.tenant.status,
+            }
+            tenants_list.append(t_dict)
+            if tenant_data is None:
+                tenant_data = t_dict
+                role = m.role
+
+        if not tenant_data:
+            first_tenant = Tenant.objects.first()
+            if first_tenant:
+                tenant_data = {
+                    "id": str(first_tenant.id),
+                    "name": first_tenant.name,
+                    "role": "admin" if (user.is_superuser or user.is_staff) else "employee",
+                    "status": first_tenant.status,
+                }
+                tenants_list.append(tenant_data)
+
+        # Audit login
+        try:
+            from apps.audit.services import log_audit_event
+            log_audit_event(
+                request=request,
+                actor=user,
+                action="auth.password_sign_in",
+                resource_type="user",
+                resource_id=str(user.id),
+                metadata={"ip": ip_address},
+            )
+        except Exception:
+            pass
+
+        return Response(
+            {
+                "token": raw_token,
+                "user": {
+                    "id": str(user.id),
+                    "email": user.email,
+                    "name": user.name or user.email.split("@")[0],
+                    "is_superuser": user.is_superuser,
+                    "role": role,
+                },
+                "tenant": tenant_data,
+                "tenants": tenants_list,
+                "expires_at": session.expires_at,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class OIDCCallbackView(APIView):
     """OIDC callback endpoint (§8.2).
 

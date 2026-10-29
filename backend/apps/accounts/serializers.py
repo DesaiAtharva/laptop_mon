@@ -10,6 +10,11 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
+class PasswordLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+
+
 class OIDCCallbackSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)
     state = serializers.CharField(required=True)

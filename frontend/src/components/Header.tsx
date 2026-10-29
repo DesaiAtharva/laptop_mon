@@ -13,6 +13,8 @@ export const Header: React.FC = () => {
     setTimezonePref,
     userName,
     userEmail,
+    logout,
+    user,
   } = useAuth();
 
   return (
@@ -35,30 +37,66 @@ export const Header: React.FC = () => {
           </svg>
         </div>
         <span className="brand-title">LaptopMon</span>
-        <span className="role-badge">{role}</span>
+        <span className="role-badge" style={{ textTransform: "uppercase" }}>{role}</span>
+        {user?.is_superuser && (
+          <span
+            style={{
+              fontSize: "0.65rem",
+              background: "rgba(245, 158, 11, 0.2)",
+              color: "var(--accent-amber)",
+              border: "1px solid rgba(245, 158, 11, 0.4)",
+              borderRadius: "4px",
+              padding: "2px 6px",
+              fontWeight: 700,
+            }}
+          >
+            SUPERUSER
+          </span>
+        )}
       </div>
 
       <div className="header-controls">
-        {/* Tenant Switcher (E46) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-subtle)", fontWeight: 600 }}>
-            TENANT:
-          </span>
-          <select
-            className="tenant-select"
-            value={activeTenant?.id || ""}
-            onChange={(e) => {
-              const selected = tenants.find((t) => t.id === e.target.value);
-              if (selected) setActiveTenant(selected);
-            }}
-          >
-            {tenants.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Multi-Tenant Switcher */}
+        {tenants.length > 1 ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-subtle)", fontWeight: 600 }}>
+              ORGANIZATION:
+            </span>
+            <select
+              className="tenant-select"
+              value={activeTenant?.id || ""}
+              onChange={(e) => {
+                const selected = tenants.find((t) => t.id === e.target.value);
+                if (selected) setActiveTenant(selected);
+              }}
+            >
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-subtle)", fontWeight: 600 }}>
+              ORG:
+            </span>
+            <span
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-main)",
+                fontWeight: 600,
+                background: "rgba(255, 255, 255, 0.05)",
+                padding: "4px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              {activeTenant?.name || "Primary Organization"}
+            </span>
+          </div>
+        )}
 
         {/* Timezone Preference (E74) */}
         <button
@@ -70,21 +108,23 @@ export const Header: React.FC = () => {
           🌐 {timezonePref === "local" ? "Local Time" : "UTC"}
         </button>
 
-        {/* Interactive Role Switcher */}
-        <select
-          className="tenant-select"
-          style={{ borderColor: "var(--border-glow)", color: "var(--accent-cyan)" }}
-          value={role}
-          onChange={(e) => setRole(e.target.value as MembershipRole)}
-          title="Switch view perspective for pairs and demoing"
-        >
-          <option value="employee">Role: Employee</option>
-          <option value="manager">Role: Manager</option>
-          <option value="admin">Role: Org Admin</option>
-          <option value="auditor">Role: Auditor</option>
-        </select>
+        {/* Perspective switcher (available for admin/superuser to preview employee/manager perspectives) */}
+        {(user?.is_superuser || role === "admin" || role === "manager") && (
+          <select
+            className="tenant-select"
+            style={{ borderColor: "var(--border-glow)", color: "var(--accent-cyan)", fontSize: "0.8rem" }}
+            value={role}
+            onChange={(e) => setRole(e.target.value as MembershipRole)}
+            title="Switch view perspective for auditing and preview"
+          >
+            <option value="admin">Perspective: Org Admin</option>
+            <option value="manager">Perspective: Manager</option>
+            <option value="employee">Perspective: Employee</option>
+            <option value="auditor">Perspective: Auditor</option>
+          </select>
+        )}
 
-        {/* User Profile */}
+        {/* Authenticated User Profile */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "8px" }}>
           <div
             style={{
@@ -97,15 +137,36 @@ export const Header: React.FC = () => {
               justifyContent: "center",
               fontWeight: 700,
               fontSize: "0.85rem",
+              color: "#ffffff",
             }}
           >
-            {userName[0]}
+            {(userName || "U")[0].toUpperCase()}
           </div>
           <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
             <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{userName}</span>
             <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>{userEmail}</span>
           </div>
         </div>
+
+        {/* Sign Out Button */}
+        <button
+          onClick={logout}
+          className="btn btn-secondary"
+          style={{
+            fontSize: "0.8rem",
+            padding: "6px 12px",
+            color: "var(--accent-rose)",
+            borderColor: "rgba(244, 63, 94, 0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            marginLeft: "6px",
+          }}
+          title="Sign out and revoke active browser session"
+        >
+          <span>🚪</span>
+          <span>Sign Out</span>
+        </button>
       </div>
     </header>
   );
