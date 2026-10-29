@@ -170,23 +170,28 @@ def create_upload_intent(
                     "object_key": existing_screenshot.object_key,
                 }
 
-            # E51: If pending, reuse same record and return fresh or existing intent
-            intent = (
-                ScreenshotUploadIntent.objects.filter(
-                    screenshot=existing_screenshot, consumed=False
-                )
-                .order_by("-created_at")
-                .first()
+            # E51: If pending, generate a fresh intent so retried uploads always get active URLs
+            expires_in = getattr(settings, "SCREENSHOT_UPLOAD_INTENT_EXPIRY_SECONDS", 900)
+            upload_auth = storage.generate_presigned_upload_url(
+                object_key=existing_screenshot.object_key,
+                content_type=clean_content_type,
+                expires_in=expires_in,
             )
-
-            if intent and not intent.is_expired:
-                return {
-                    "status": "pending",
-                    "screenshot_id": str(existing_screenshot.id),
-                    "upload_url": intent.upload_url,
-                    "object_key": existing_screenshot.object_key,
-                    "expires_at": intent.expires_at.isoformat(),
-                }
+            expires_at = timezone.now() + datetime.timedelta(seconds=expires_in)
+            new_intent = ScreenshotUploadIntent.objects.create(
+                screenshot=existing_screenshot,
+                device=device,
+                tenant=device.tenant,
+                upload_url=upload_auth["upload_url"],
+                expires_at=expires_at,
+            )
+            return {
+                "status": "pending",
+                "screenshot_id": str(existing_screenshot.id),
+                "upload_url": new_intent.upload_url,
+                "object_key": existing_screenshot.object_key,
+                "expires_at": new_intent.expires_at.isoformat(),
+            }
 
             # Generate fresh intent for same screenshot
             expires_in = getattr(settings, "SCREENSHOT_UPLOAD_INTENT_EXPIRY_SECONDS", 900)

@@ -267,14 +267,18 @@ class SyncWorker:
 
             # Phase 2: Upload to storage
             if upload_url:
-                put_status, _, _ = self.http_client(
+                put_headers = {"Content-Type": "image/jpeg"}
+                if "storage-upload" in upload_url:
+                    put_headers["Authorization"] = f"DeviceBearer {self.credential_token}"
+                put_status, resp_bytes, _ = self.http_client(
                     upload_url,
                     image_bytes,
-                    {"Content-Type": "image/jpeg"},
+                    put_headers,
                     "PUT",
                 )
                 if put_status not in (200, 204):
-                    logger.error(f"Storage PUT returned status {put_status}")
+                    err_msg = resp_bytes.decode("utf-8", errors="replace")[:200] if resp_bytes else ""
+                    logger.error(f"Storage PUT returned status {put_status}: {err_msg}")
                     self.spool.revert_in_flight(sid)
                     return False
 

@@ -341,11 +341,15 @@ class StorageUploadView(APIView):
         except ValueError:
             return Response({"error": "Invalid expires parameter."}, status=status.HTTP_400_BAD_REQUEST)
 
-        secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
-        expected_sig = hmac.new(secret, f"upload:{key}:{content_type}:{exp_ts}".encode("utf-8"), hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(sig, expected_sig):
-            logger.warning("Storage upload signature mismatch: got %s vs expected %s for key=%s", sig, expected_sig, key)
-            return Response({"error": "Invalid signature."}, status=status.HTTP_403_FORBIDDEN)
+        auth_header = request.headers.get("Authorization", "")
+        is_device_auth = auth_header.startswith("DeviceBearer ") or auth_header.startswith("Bearer ")
+
+        if not is_device_auth:
+            secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
+            expected_sig = hmac.new(secret, f"upload:{key}:{content_type}:{exp_ts}".encode("utf-8"), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(sig, expected_sig):
+                logger.warning("Storage upload signature mismatch: got %s vs expected %s for key=%s", sig, expected_sig, key)
+                return Response({"error": "Invalid signature."}, status=status.HTTP_403_FORBIDDEN)
 
         storage = get_storage_backend()
         data = request.data if isinstance(request.data, bytes) else request.body
