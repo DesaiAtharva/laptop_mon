@@ -178,16 +178,16 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         from botocore.client import Config
 
         self.bucket = getattr(settings, "SCREENSHOT_STORAGE_BUCKET", "laptop-mon-screenshots")
-        self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "http://127.0.0.1:9000")
-        self.access_key = getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "minioadmin")
-        self.secret_key = getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "minioadmin")
+        self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "")
+        self.access_key = getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
+        self.secret_key = getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
         self.region = getattr(settings, "SCREENSHOT_STORAGE_REGION", "us-east-1")
 
         self.s3_client = boto3.client(
             "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.access_key,
-            aws_secret_access_key=self.secret_key,
+            endpoint_url=self.endpoint_url if self.endpoint_url else None,
+            aws_access_key_id=self.access_key if self.access_key else None,
+            aws_secret_access_key=self.secret_key if self.secret_key else None,
             region_name=self.region,
             config=Config(signature_version="s3v4"),
         )
