@@ -108,10 +108,19 @@ class UserSession(BaseUUIDModel):
         token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
         expires_at = timezone.now() + timezone.timedelta(hours=lifetime_hours)
 
+        clean_ip: Optional[str] = None
+        if ip_address:
+            import ipaddress
+            try:
+                ipaddress.ip_address(str(ip_address).strip())
+                clean_ip = str(ip_address).strip()
+            except ValueError:
+                clean_ip = None
+
         session = cls.objects.create(
             user=user,
             token_hash=token_hash,
-            ip_address=ip_address,
+            ip_address=clean_ip,
             user_agent=user_agent[:512],
             expires_at=expires_at,
         )
