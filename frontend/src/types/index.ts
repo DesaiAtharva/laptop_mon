@@ -90,6 +90,7 @@ export interface ScreenshotItem {
   width: number;
   height: number;
   file_size: number;
+  status?: string;
   thumbnail_url?: string;
   view_url?: string;
 }
