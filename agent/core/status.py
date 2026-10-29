@@ -70,15 +70,14 @@ class StatusTracker:
                 with open(self.state_file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 self.first_run_acknowledged = data.get("first_run_acknowledged", False)
-                self.explicitly_stopped = data.get("explicitly_stopped", False) or (data.get("state") == AgentState.STOPPED.value)
+                self.explicitly_stopped = data.get("explicitly_stopped", False)
                 self.stop_reason = data.get("stop_reason")
                 self.policy_version = data.get("policy_version", 1)
                 self.device_id = data.get("device_id")
                 self.os_user = data.get("os_user", "")
 
-                if self.explicitly_stopped or data.get("state") == AgentState.STOPPED.value:
+                if self.explicitly_stopped:
                     self.state = AgentState.STOPPED
-                    self.explicitly_stopped = True
                 elif not self.first_run_acknowledged:
                     self.state = AgentState.UNACKNOWLEDGED
                 else:

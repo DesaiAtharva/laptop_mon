@@ -169,8 +169,9 @@ def run_agent(config_file: Optional[str] = None):
         policy_manager.update_policy(config["initial_policy"])
     privacy_filter = PrivacyFilter(policy_manager=policy_manager)
     status_tracker = StatusTracker(str(data_dir / "status.json"))
-    if not status_tracker.first_run_acknowledged and not status_tracker.explicitly_stopped:
-        status_tracker.acknowledge_first_run()
+    status_tracker.acknowledge_first_run()
+    if status_tracker.explicitly_stopped or status_tracker.state == AgentState.STOPPED:
+        status_tracker.resume_monitoring()
 
     lifecycle = LifecycleManager(str(data_dir), adapter, journal, status_tracker)
     diagnostics = DiagnosticsCollector()
@@ -221,6 +222,7 @@ def run_agent(config_file: Optional[str] = None):
     print(f" Server:  {server_url}")
     print(f" Device:  {device_id}")
     print(f" Data:    {data_dir}")
+    print(f" Status:  {status_tracker.state.value.upper()} (capturing: {status_tracker.can_capture()})")
     print(" Transparent, policy-driven monitoring is running.")
     print(" Press Ctrl+C to stop.")
     print("=" * 60)
