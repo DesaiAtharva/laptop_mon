@@ -4,7 +4,12 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+# Fallback ensures SECRET_KEY is never empty if environment variable is blank
+SECRET_KEY = (
+    os.environ.get("DJANGO_SECRET_KEY")
+    or os.environ.get("SECRET_KEY")
+    or "prod-laptop-mon-saas-secret-key-2026-saptasurya"
+)
 
 # SSL & Proxy Termination settings
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
