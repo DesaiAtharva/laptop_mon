@@ -10,6 +10,8 @@ from apps.screenshots.views import (
     ScreenshotListView,
     ScreenshotRetroactiveExclusionView,
     ScreenshotViewUrlView,
+    StorageUploadView,
+    StorageViewView,
 )
 
 urlpatterns = [
@@ -24,7 +26,17 @@ urlpatterns = [
         AgentScreenshotCompleteView.as_view(),
         name="agent-screenshot-complete",
     ),
+    re_path(
+        r"^agent/screenshots/storage-upload/?$",
+        StorageUploadView.as_view(),
+        name="storage-upload",
+    ),
     # Dashboard endpoints (§8.4)
+    re_path(
+        r"^screenshots/storage-view/?$",
+        StorageViewView.as_view(),
+        name="storage-view",
+    ),
     re_path(
         r"^screenshots/?$",
         ScreenshotListView.as_view(),

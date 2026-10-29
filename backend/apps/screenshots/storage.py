@@ -170,42 +170,40 @@ class MemoryObjectStorageBackend(BaseScreenshotStorage):
         return hmac.new(secret, payload.encode("utf-8"), hashlib.sha256).hexdigest()[:16]
 
 
-class S3ObjectStorageBackend(BaseScreenshotStorage):
-    """Production S3 / MinIO backend using boto3 client."""
+class FileSystemObjectStorageBackend(BaseScreenshotStorage):
+    """Secure on-disk object storage backend with HMAC-SHA256 signed presigned URLs."""
 
-    def __init__(self) -> None:
-        import boto3
-        from botocore.client import Config
-
-        self.bucket = getattr(settings, "SCREENSHOT_STORAGE_BUCKET", "laptop-mon-screenshots")
-        self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "")
-        self.access_key = getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
-        self.secret_key = getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
-        self.region = getattr(settings, "SCREENSHOT_STORAGE_REGION", "us-east-1")
-
-        self.s3_client = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url if self.endpoint_url else None,
-            aws_access_key_id=self.access_key if self.access_key else None,
-            aws_secret_access_key=self.secret_key if self.secret_key else None,
-            region_name=self.region,
-            config=Config(signature_version="s3v4"),
+    def __init__(self, root_dir: Optional[str] = None) -> None:
+        self.root_dir = root_dir or getattr(
+            settings,
+            "SCREENSHOT_STORAGE_LOCAL_DIR",
+            os.path.join(getattr(settings, "MEDIA_ROOT", "/app/media"), "screenshots"),
         )
+        os.makedirs(self.root_dir, exist_ok=True)
+
+    def _get_path(self, object_key: str) -> str:
+        clean_key = object_key.replace("\\", "/").lstrip("/")
+        full_path = os.path.abspath(os.path.join(self.root_dir, clean_key))
+        if not full_path.startswith(os.path.abspath(self.root_dir)):
+            raise ValueError("Invalid object key traversal.")
+        return full_path
+
+    def _sign(self, payload: str) -> str:
+        secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
+        return hmac.new(secret, payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
     def generate_presigned_upload_url(
         self, object_key: str, content_type: str, expires_in: int = 900
     ) -> Dict[str, Any]:
-        url = self.s3_client.generate_presigned_url(
-            ClientMethod="put_object",
-            Params={
-                "Bucket": self.bucket,
-                "Key": object_key,
-                "ContentType": content_type,
-            },
-            ExpiresIn=expires_in,
+        exp_ts = int(timezone.now().timestamp()) + expires_in
+        sig = self._sign(f"upload:{object_key}:{content_type}:{exp_ts}")
+        query = urlencode(
+            {"key": object_key, "type": content_type, "expires": exp_ts, "sig": sig}
         )
+        base_url = getattr(settings, "BACKEND_BASE_URL", "https://monitor.saptasuryasolar.com").rstrip("/")
+        upload_url = f"{base_url}/api/agent/screenshots/storage-upload?{query}"
         return {
-            "upload_url": url,
+            "upload_url": upload_url,
             "method": "PUT",
             "headers": {"Content-Type": content_type},
             "expires_in": expires_in,
@@ -213,20 +211,143 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         }
 
     def generate_presigned_view_url(self, object_key: str, expires_in: int = 300) -> str:
-        return str(
-            self.s3_client.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={"Bucket": self.bucket, "Key": object_key},
-                ExpiresIn=expires_in,
-            )
-        )
+        exp_ts = int(timezone.now().timestamp()) + expires_in
+        sig = self._sign(f"view:{object_key}:{exp_ts}")
+        query = urlencode({"key": object_key, "expires": exp_ts, "sig": sig})
+        base_url = getattr(settings, "BACKEND_BASE_URL", "https://monitor.saptasuryasolar.com").rstrip("/")
+        return f"{base_url}/api/screenshots/storage-view?{query}"
 
     def is_view_url_expired(self, url: str) -> bool:
         try:
             parsed = urlparse(url)
             qs = parse_qs(parsed.query)
+            if "expires" not in qs:
+                return True
+            exp_ts = int(qs["expires"][0])
+            return int(timezone.now().timestamp()) > exp_ts
+        except Exception:
+            return True
+
+    def object_exists(self, object_key: str) -> bool:
+        return os.path.exists(self._get_path(object_key))
+
+    def get_object_metadata(self, object_key: str) -> Dict[str, Any]:
+        path = self._get_path(object_key)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Object {object_key} does not exist.")
+        stat = os.stat(path)
+        with open(path, "rb") as f:
+            data = f.read()
+        return {
+            "content_length": stat.st_size,
+            "content_type": "image/webp" if object_key.endswith(".webp") else "image/jpeg",
+            "sha256": hashlib.sha256(data).hexdigest(),
+        }
+
+    def get_object_bytes(self, object_key: str) -> bytes:
+        path = self._get_path(object_key)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Object {object_key} does not exist.")
+        with open(path, "rb") as f:
+            return f.read()
+
+    def put_object_bytes(
+        self, object_key: str, data: bytes, content_type: str = "image/jpeg"
+    ) -> None:
+        path = self._get_path(object_key)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "wb") as f:
+            f.write(data)
+
+    def delete_object(self, object_key: str) -> bool:
+        try:
+            path = self._get_path(object_key)
+            if os.path.exists(path):
+                os.remove(path)
+            return True
+        except Exception as e:
+            logger.error("Failed to delete local object %s: %s", object_key, str(e))
+            return False
+
+    def verify_deletion(self, object_key: str) -> bool:
+        return not self.object_exists(object_key)
+
+
+class S3ObjectStorageBackend(BaseScreenshotStorage):
+    """Production S3 / MinIO backend using boto3 client with automatic fallback."""
+
+    def __init__(self) -> None:
+        import boto3
+        from botocore.client import Config
+
+        self._fallback = FileSystemObjectStorageBackend()
+        self.bucket = getattr(settings, "SCREENSHOT_STORAGE_BUCKET", "laptop-mon-screenshots")
+        self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "")
+        self.access_key = getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
+        self.secret_key = getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
+        self.region = getattr(settings, "SCREENSHOT_STORAGE_REGION", "us-east-1")
+
+        try:
+            self.s3_client = boto3.client(
+                "s3",
+                endpoint_url=self.endpoint_url if self.endpoint_url else None,
+                aws_access_key_id=self.access_key if self.access_key else None,
+                aws_secret_access_key=self.secret_key if self.secret_key else None,
+                region_name=self.region,
+                config=Config(signature_version="s3v4"),
+            )
+        except Exception as exc:
+            logger.warning("Could not initialize S3 client: %s; using local fallback.", exc)
+            self.s3_client = None
+
+    def generate_presigned_upload_url(
+        self, object_key: str, content_type: str, expires_in: int = 900
+    ) -> Dict[str, Any]:
+        if not self.s3_client or not (self.access_key or self.endpoint_url):
+            return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
+        try:
+            url = self.s3_client.generate_presigned_url(
+                ClientMethod="put_object",
+                Params={
+                    "Bucket": self.bucket,
+                    "Key": object_key,
+                    "ContentType": content_type,
+                },
+                ExpiresIn=expires_in,
+            )
+            return {
+                "upload_url": url,
+                "method": "PUT",
+                "headers": {"Content-Type": content_type},
+                "expires_in": expires_in,
+                "expires_at": (timezone.now() + datetime.timedelta(seconds=expires_in)).isoformat(),
+            }
+        except Exception as ex:
+            logger.warning("S3 generate_presigned_upload_url failed (%s), using local fallback", ex)
+            return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
+
+    def generate_presigned_view_url(self, object_key: str, expires_in: int = 300) -> str:
+        if not self.s3_client or not (self.access_key or self.endpoint_url):
+            return self._fallback.generate_presigned_view_url(object_key, expires_in)
+        try:
+            return str(
+                self.s3_client.generate_presigned_url(
+                    ClientMethod="get_object",
+                    Params={"Bucket": self.bucket, "Key": object_key},
+                    ExpiresIn=expires_in,
+                )
+            )
+        except Exception as ex:
+            logger.warning("S3 generate_presigned_view_url failed (%s), using local fallback", ex)
+            return self._fallback.generate_presigned_view_url(object_key, expires_in)
+
+    def is_view_url_expired(self, url: str) -> bool:
+        if "storage-view" in url:
+            return self._fallback.is_view_url_expired(url)
+        try:
+            parsed = urlparse(url)
+            qs = parse_qs(parsed.query)
             if "X-Amz-Date" in qs and "X-Amz-Expires" in qs:
-                # AWS SigV4 format
                 date_str = qs["X-Amz-Date"][0]
                 expires_sec = int(qs["X-Amz-Expires"][0])
                 start_dt = datetime.datetime.strptime(date_str, "%Y%m%dT%H%M%SZ").replace(
@@ -238,8 +359,11 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             return True
 
     def object_exists(self, object_key: str) -> bool:
+        if self._fallback.object_exists(object_key):
+            return True
+        if not self.s3_client:
+            return False
         from botocore.exceptions import ClientError
-
         try:
             self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
             return True
@@ -247,8 +371,12 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
                 return False
             raise
+        except Exception:
+            return False
 
     def get_object_metadata(self, object_key: str) -> Dict[str, Any]:
+        if self._fallback.object_exists(object_key):
+            return self._fallback.get_object_metadata(object_key)
         response = self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
         return {
             "content_length": response.get("ContentLength", 0),
@@ -257,6 +385,8 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         }
 
     def get_object_bytes(self, object_key: str) -> bytes:
+        if self._fallback.object_exists(object_key):
+            return self._fallback.get_object_bytes(object_key)
         response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
         body: bytes = response["Body"].read()
         return body
@@ -264,20 +394,30 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
     def put_object_bytes(
         self, object_key: str, data: bytes, content_type: str = "image/jpeg"
     ) -> None:
-        self.s3_client.put_object(
-            Bucket=self.bucket,
-            Key=object_key,
-            Body=data,
-            ContentType=content_type,
-        )
+        if not self.s3_client or not (self.access_key or self.endpoint_url):
+            self._fallback.put_object_bytes(object_key, data, content_type)
+            return
+        try:
+            self.s3_client.put_object(
+                Bucket=self.bucket,
+                Key=object_key,
+                Body=data,
+                ContentType=content_type,
+            )
+        except Exception as ex:
+            logger.warning("S3 put_object_bytes failed (%s), using local fallback", ex)
+            self._fallback.put_object_bytes(object_key, data, content_type)
 
     def delete_object(self, object_key: str) -> bool:
+        deleted_local = self._fallback.delete_object(object_key)
+        if not self.s3_client:
+            return deleted_local
         try:
             self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
             return True
         except Exception as e:
             logger.error("Failed to delete S3 object %s: %s", object_key, str(e))
-            return False
+            return deleted_local
 
     def verify_deletion(self, object_key: str) -> bool:
         return not self.object_exists(object_key)

@@ -303,3 +303,79 @@ class ScreenshotRetroactiveExclusionView(APIView):
         )
 
         return Response(result, status=status.HTTP_200_OK)
+
+
+class StorageUploadView(APIView):
+    """PUT /api/agent/screenshots/storage-upload (Direct presigned upload)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def put(self, request: Request) -> Response:
+        import hashlib, hmac
+        from django.conf import settings
+        from django.utils import timezone
+        from apps.screenshots.storage import get_storage_backend
+
+        key = request.query_params.get("key")
+        content_type = request.query_params.get("type", "image/jpeg")
+        expires_str = request.query_params.get("expires")
+        sig = request.query_params.get("sig")
+
+        if not (key and expires_str and sig):
+            return Response({"error": "Missing key, expires, or sig parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exp_ts = int(expires_str)
+            if int(timezone.now().timestamp()) > exp_ts:
+                return Response({"error": "Presigned upload URL has expired."}, status=status.HTTP_403_FORBIDDEN)
+        except ValueError:
+            return Response({"error": "Invalid expires parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+        secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
+        expected_sig = hmac.new(secret, f"upload:{key}:{content_type}:{exp_ts}".encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return Response({"error": "Invalid signature."}, status=status.HTTP_403_FORBIDDEN)
+
+        storage = get_storage_backend()
+        storage.put_object_bytes(key, request.body, content_type)
+        return Response(status=status.HTTP_200_OK)
+
+
+class StorageViewView(APIView):
+    """GET /api/screenshots/storage-view (Direct presigned view)."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request: Request) -> Any:
+        import hashlib, hmac
+        from django.conf import settings
+        from django.http import HttpResponse
+        from django.utils import timezone
+        from apps.screenshots.storage import get_storage_backend
+
+        key = request.query_params.get("key")
+        expires_str = request.query_params.get("expires")
+        sig = request.query_params.get("sig")
+
+        if not (key and expires_str and sig):
+            return Response({"error": "Missing key, expires, or sig."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            exp_ts = int(expires_str)
+            if int(timezone.now().timestamp()) > exp_ts:
+                return Response({"error": "Presigned view URL has expired."}, status=status.HTTP_403_FORBIDDEN)
+        except ValueError:
+            return Response({"error": "Invalid expires parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+        secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
+        expected_sig = hmac.new(secret, f"view:{key}:{exp_ts}".encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return Response({"error": "Invalid signature."}, status=status.HTTP_403_FORBIDDEN)
+
+        storage = get_storage_backend()
+        if not storage.object_exists(key):
+            return Response({"error": "Screenshot object not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        data = storage.get_object_bytes(key)
+        content_type = "image/webp" if key.endswith(".webp") else "image/jpeg"
+        return HttpResponse(data, content_type=content_type)

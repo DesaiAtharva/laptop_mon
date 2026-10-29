@@ -202,6 +202,8 @@ class LifecycleManager:
             logger.error(f"Error during shutdown: {ex}")
             return False
 
+    shutdown = on_bounded_shutdown
+
     def on_uninstall_requested(self) -> Dict[str, Any]:
         """
         Uninstall hook (REQ-15-2, E13).
