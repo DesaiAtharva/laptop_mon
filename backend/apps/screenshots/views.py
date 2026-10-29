@@ -305,10 +305,20 @@ class ScreenshotRetroactiveExclusionView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
+class RawBinaryUploadParser:
+    """Accepts raw binary bytes for presigned image uploads."""
+    media_type = "*/*"
+
+    def parse(self, stream: Any, media_type: Optional[str] = None, parser_context: Optional[Dict[str, Any]] = None) -> bytes:
+        return stream.read()
+
+
 class StorageUploadView(APIView):
     """PUT /api/agent/screenshots/storage-upload (Direct presigned upload)."""
 
+    authentication_classes = []
     permission_classes = [permissions.AllowAny]
+    parser_classes = [RawBinaryUploadParser]
 
     def put(self, request: Request) -> Response:
         import hashlib, hmac
@@ -334,16 +344,19 @@ class StorageUploadView(APIView):
         secret = getattr(settings, "SECRET_KEY", "fallback-secret").encode("utf-8")
         expected_sig = hmac.new(secret, f"upload:{key}:{content_type}:{exp_ts}".encode("utf-8"), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(sig, expected_sig):
+            logger.warning("Storage upload signature mismatch: got %s vs expected %s for key=%s", sig, expected_sig, key)
             return Response({"error": "Invalid signature."}, status=status.HTTP_403_FORBIDDEN)
 
         storage = get_storage_backend()
-        storage.put_object_bytes(key, request.body, content_type)
+        data = request.data if isinstance(request.data, bytes) else request.body
+        storage.put_object_bytes(key, data, content_type)
         return Response(status=status.HTTP_200_OK)
 
 
 class StorageViewView(APIView):
     """GET /api/screenshots/storage-view (Direct presigned view)."""
 
+    authentication_classes = []
     permission_classes = [permissions.AllowAny]
 
     def get(self, request: Request) -> Any:
