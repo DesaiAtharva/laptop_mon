@@ -1,7 +1,7 @@
 """URL routes for screenshot endpoints adhering to §8.3 and §8.4."""
 from __future__ import annotations
 
-from django.urls import path
+from django.urls import path, re_path
 from apps.screenshots.views import (
     AgentScreenshotCompleteView,
     AgentScreenshotUploadIntentView,
@@ -14,19 +14,19 @@ from apps.screenshots.views import (
 
 urlpatterns = [
     # Agent endpoints (§8.3)
-    path(
-        "agent/screenshots/upload-intents",
+    re_path(
+        r"^agent/screenshots/upload-intents/?$",
         AgentScreenshotUploadIntentView.as_view(),
         name="agent-screenshot-upload-intent",
     ),
-    path(
-        "agent/screenshots/complete",
+    re_path(
+        r"^agent/screenshots/complete/?$",
         AgentScreenshotCompleteView.as_view(),
         name="agent-screenshot-complete",
     ),
     # Dashboard endpoints (§8.4)
-    path(
-        "screenshots",
+    re_path(
+        r"^screenshots/?$",
         ScreenshotListView.as_view(),
         name="screenshot-list",
     ),

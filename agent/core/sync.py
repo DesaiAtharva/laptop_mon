@@ -88,7 +88,7 @@ class SyncWorker:
     def _auth_headers(self) -> Dict[str, str]:
         return {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.credential_token}",
+            "Authorization": f"DeviceBearer {self.credential_token}",
             "X-Device-Id": self.device_id,
         }
 
@@ -128,7 +128,7 @@ class SyncWorker:
             "events": payload_events,
         }).encode("utf-8")
 
-        url = f"{self.base_api_url}/api/agent/events/batch/"
+        url = f"{self.base_api_url}/api/agent/events/batch"
         try:
             status, resp_bytes, resp_headers = self.http_client(url, body, self._auth_headers(), "POST")
             return self._handle_event_batch_response(status, resp_bytes, resp_headers, pending)
@@ -238,7 +238,7 @@ class SyncWorker:
             return False
 
         # Phase 1: Request upload intent
-        intent_url = f"{self.base_api_url}/api/agent/screenshots/upload-intents/"
+        intent_url = f"{self.base_api_url}/api/agent/screenshots/upload-intents"
         intent_body = json.dumps(
             {
                 "screenshot_id": sid,
@@ -279,7 +279,7 @@ class SyncWorker:
                     return False
 
             # Phase 3: Finalize completion
-            comp_url = f"{self.base_api_url}/api/agent/screenshots/complete/"
+            comp_url = f"{self.base_api_url}/api/agent/screenshots/complete"
             comp_body = json.dumps(
                 {
                     "screenshot_id": sid,
@@ -309,7 +309,7 @@ class SyncWorker:
         if self.is_revoked:
             return False
 
-        url = f"{self.base_api_url}/api/agent/heartbeat/"
+        url = f"{self.base_api_url}/api/agent/heartbeat"
         body = json.dumps(heartbeat_payload).encode("utf-8")
         try:
             status, resp_bytes, _ = self.http_client(url, body, self._auth_headers(), "POST")

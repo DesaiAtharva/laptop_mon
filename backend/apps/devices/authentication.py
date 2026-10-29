@@ -24,7 +24,7 @@ class DeviceBearerAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request: authentication.Request) -> Optional[Tuple[Any, Device]]:
         auth_header = authentication.get_authorization_header(request).split()
 
-        if not auth_header or auth_header[0].lower() != self.keyword.lower().encode():
+        if not auth_header or auth_header[0].lower() not in (b"devicebearer", b"bearer"):
             return None
 
         if len(auth_header) != 2:

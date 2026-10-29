@@ -185,7 +185,7 @@ def run_agent(config_file: Optional[str] = None):
             policy_url = f"{server_url}/api/agent/policy"
             req = urllib.request.Request(
                 policy_url,
-                headers={"Authorization": f"Bearer {device_secret}", "X-Device-Id": device_id},
+                headers={"Authorization": f"DeviceBearer {device_secret}", "X-Device-Id": device_id},
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
                 active_policy = json.loads(resp.read().decode("utf-8"))

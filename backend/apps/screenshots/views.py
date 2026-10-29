@@ -57,10 +57,10 @@ class AgentScreenshotUploadIntentView(APIView):
     """POST /api/agent/screenshots/upload-intents (§6.2, §8.3, E51)."""
 
     authentication_classes = [DeviceBearerAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request: Request) -> Response:
-        device: Device = getattr(request, "device", None) or request.user
+        device: Device = getattr(request, "device", None) or (request.user if isinstance(request.user, Device) else None)
         if not isinstance(device, Device):
             raise PermissionDenied("Authentication requires an active enrolled device credential.")
 
@@ -92,10 +92,10 @@ class AgentScreenshotCompleteView(APIView):
     """POST /api/agent/screenshots/complete (§6.2, §8.3, E52, E53)."""
 
     authentication_classes = [DeviceBearerAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request: Request) -> Response:
-        device: Device = getattr(request, "device", None) or request.user
+        device: Device = getattr(request, "device", None) or (request.user if isinstance(request.user, Device) else None)
         if not isinstance(device, Device):
             raise PermissionDenied("Authentication requires an active enrolled device credential.")
 
