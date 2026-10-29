@@ -2,6 +2,128 @@ import React, { useEffect, useState } from "react";
 import { api } from "../services/api";
 import { ScreenshotItem } from "../types";
 
+const ScreenshotCardItem: React.FC<{ sc: ScreenshotItem; onInspect: () => void }> = ({ sc, onInspect }) => {
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [loadingThumb, setLoadingThumb] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingThumb(true);
+    api.getScreenshotViewUrl(sc.id)
+      .then((res) => {
+        if (isMounted && res && res.view_url) {
+          setThumbUrl(res.view_url);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setLoadingThumb(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [sc.id]);
+
+  const isFinalized = sc.status === "finalized";
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: "1rem",
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        transition: "transform 0.2s, box-shadow 0.2s",
+      }}
+      onClick={onInspect}
+    >
+      <div
+        style={{
+          height: "160px",
+          borderRadius: "var(--radius-sm)",
+          background: "linear-gradient(135deg, #1e293b, #0f172a)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "1px solid var(--border-subtle)",
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        {thumbUrl ? (
+          <img
+            src={thumbUrl}
+            alt="Screenshot capture preview"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-subtle)" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>
+              {isFinalized ? (loadingThumb ? "Loading preview..." : "Audited Capture") : "Pending Upload"}
+            </span>
+          </div>
+        )}
+        <span
+          style={{
+            position: "absolute",
+            bottom: "8px",
+            right: "8px",
+            fontSize: "0.75rem",
+            background: "rgba(0,0,0,0.75)",
+            padding: "2px 8px",
+            borderRadius: "4px",
+            color: "#cbd5e1",
+          }}
+        >
+          {sc.width ? `${sc.width}x${sc.height}` : "1080p"}
+        </span>
+        <span
+          style={{
+            position: "absolute",
+            top: "8px",
+            left: "8px",
+            fontSize: "0.7rem",
+            background: isFinalized ? "rgba(16, 185, 129, 0.85)" : "rgba(245, 158, 11, 0.85)",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            color: "#ffffff",
+            fontWeight: 600,
+            textTransform: "uppercase",
+          }}
+        >
+          {isFinalized ? "Verified" : "Pending"}
+        </span>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: "0.85rem", fontWeight: 600 }}>{sc.device_id.slice(0, 18)}...</div>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>
+            {new Date(sc.captured_at).toLocaleTimeString()}
+          </div>
+        </div>
+        <button
+          className="btn btn-secondary"
+          style={{ padding: "4px 10px", fontSize: "0.75rem" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onInspect();
+          }}
+        >
+          Inspect
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const ScreenshotGallery: React.FC = () => {
   const [screenshots, setScreenshots] = useState<ScreenshotItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,67 +183,11 @@ export const ScreenshotGallery: React.FC = () => {
         }}
       >
         {screenshots.map((sc) => (
-          <div
+          <ScreenshotCardItem
             key={sc.id}
-            className="card"
-            style={{
-              padding: "1rem",
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-            onClick={() => handleOpenScreenshot(sc)}
-          >
-            <div
-              style={{
-                height: "160px",
-                borderRadius: "var(--radius-sm)",
-                background: "linear-gradient(135deg, #1e293b, #0f172a)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1px solid var(--border-subtle)",
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-subtle)" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: "8px",
-                  right: "8px",
-                  fontSize: "0.75rem",
-                  background: "rgba(0,0,0,0.7)",
-                  padding: "2px 8px",
-                  borderRadius: "4px",
-                  color: "#cbd5e1",
-                }}
-              >
-                {sc.width}x{sc.height}
-              </span>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: "0.85rem", fontWeight: 600 }}>{sc.device_id}</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>
-                  {new Date(sc.captured_at).toLocaleTimeString()}
-                </div>
-              </div>
-              <button
-                className="btn btn-secondary"
-                style={{ padding: "4px 10px", fontSize: "0.75rem" }}
-              >
-                Inspect
-              </button>
-            </div>
-          </div>
+            sc={sc}
+            onInspect={() => handleOpenScreenshot(sc)}
+          />
         ))}
       </div>
 
