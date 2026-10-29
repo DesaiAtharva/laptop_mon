@@ -78,7 +78,7 @@ class SyncWorker:
         req = urllib.request.Request(url, data=req_data, headers=headers, method=method)
         # Default ssl.create_default_context() enforces TLS verification strictly
         try:
-            with urllib.request.urlopen(req, timeout=15.0) as resp:
+            with urllib.request.urlopen(req, timeout=45.0) as resp:
                 resp_headers = {k.lower(): v for k, v in resp.headers.items()}
                 return resp.getcode(), resp.read(), resp_headers
         except urllib.error.HTTPError as ex:
