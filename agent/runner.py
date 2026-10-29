@@ -36,7 +36,7 @@ from agent.core.policy import PolicyManager
 from agent.core.privacy_filter import PrivacyFilter
 from agent.core.scheduler import AgentScheduler
 from agent.core.spool import ScreenshotSpool
-from agent.core.status import StatusTracker
+from agent.core.status import AgentState, StatusTracker
 from agent.core.sync import SyncWorker
 
 logger = logging.getLogger("agent.runner")
