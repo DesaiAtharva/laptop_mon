@@ -114,12 +114,22 @@ def verify_and_process_image(
                     f"Image dimensions {width}x{height} exceed limits ({max_w}x{max_h})."
                 )
 
-            # Generate thumbnail WebP derivative (§10.2)
-            thumb_img = img.copy()
-            thumb_img.thumbnail((320, 180))
-            thumb_bio = io.BytesIO()
-            thumb_img.save(thumb_bio, format="WEBP", quality=75)
-            thumbnail_bytes = thumb_bio.getvalue()
+            # Generate thumbnail WebP derivative (§10.2) with JPEG fallback
+            thumbnail_bytes = b""
+            try:
+                thumb_img = img.copy()
+                thumb_img.thumbnail((320, 180))
+                thumb_bio = io.BytesIO()
+                try:
+                    thumb_img.save(thumb_bio, format="WEBP", quality=75)
+                except Exception:
+                    thumb_bio = io.BytesIO()
+                    if thumb_img.mode in ("RGBA", "P"):
+                        thumb_img = thumb_img.convert("RGB")
+                    thumb_img.save(thumb_bio, format="JPEG", quality=75)
+                thumbnail_bytes = thumb_bio.getvalue()
+            except Exception as ex:
+                logger.warning("Thumbnail generation error (using fallback): %s", ex)
 
             return width, height, thumbnail_bytes
 
@@ -313,13 +323,19 @@ def complete_screenshot_upload(
     )
 
     # Save thumbnail derivative
-    thumbnail_key = generate_thumbnail_object_key(
-        tenant_id=device.tenant_id,
-        device_id=device.id,
-        screenshot_id=screenshot.id,
-        captured_at=screenshot.captured_at,
-    )
-    storage.put_object_bytes(thumbnail_key, thumb_bytes, content_type="image/webp")
+    thumbnail_key = ""
+    if thumb_bytes:
+        try:
+            thumbnail_key = generate_thumbnail_object_key(
+                tenant_id=device.tenant_id,
+                device_id=device.id,
+                screenshot_id=screenshot.id,
+                captured_at=screenshot.captured_at,
+            )
+            storage.put_object_bytes(thumbnail_key, thumb_bytes, content_type="image/webp")
+        except Exception as ex:
+            logger.warning("Could not persist thumbnail derivative: %s", ex)
+            thumbnail_key = ""
 
     # Update screenshot metadata
     screenshot.thumbnail_key = thumbnail_key

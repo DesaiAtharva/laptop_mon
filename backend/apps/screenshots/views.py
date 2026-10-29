@@ -128,6 +128,11 @@ class AgentScreenshotCompleteView(APIView):
             if "already been deleted" in msg.lower():
                 raise ApplicationConflict(message=msg, code="SCREENSHOT_DELETED")
             raise UnprocessableEntity(message=msg, code="FINALIZE_VERIFICATION_FAILED")
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            logger.error("Error in complete_screenshot_upload: %s\n%s", e, tb)
+            return Response({"code": "internal_error", "message": f"{type(e).__name__}: {str(e)}", "traceback": tb[-500:]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StandardResultsSetPagination(PageNumberPagination):
