@@ -22,6 +22,10 @@ import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from agent.packaging.signing import compute_file_sha256, sign_manifest
 
 logger = logging.getLogger("packaging")
