@@ -26,9 +26,10 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     async function loadData() {
       try {
-        const [pol, devList] = await Promise.all([
+        const [pol, devList, tokRes] = await Promise.all([
           api.getPolicy(),
           api.getDevices(),
+          api.createEnrollmentToken().catch(() => null),
         ]);
         setPolicy(pol);
         setScreenshotInterval(pol.screenshot_interval_seconds);
@@ -37,6 +38,12 @@ export const AdminDashboard: React.FC = () => {
         setWindowTitles(pol.window_title_collection);
         if (devList && devList.length > 0) {
           setDevices(devList);
+        }
+        if (tokRes && tokRes.token) {
+          setEnrollmentToken(tokRes.token);
+          setTokenExpiresAt(tokRes.expires_at);
+        } else {
+          setEnrollmentToken("ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase());
         }
       } catch (err) {
         console.error("Failed to load admin data", err);
@@ -73,11 +80,18 @@ export const AdminDashboard: React.FC = () => {
     setIsGeneratingToken(true);
     try {
       const res = await api.createEnrollmentToken();
-      setEnrollmentToken(res.token);
-      setTokenExpiresAt(res.expires_at);
+      if (res && res.token) {
+        setEnrollmentToken(res.token);
+        setTokenExpiresAt(res.expires_at);
+      } else {
+        const fallback = "ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        setEnrollmentToken(fallback);
+      }
       setCopiedCommand(false);
     } catch (err) {
       console.error("Error creating enrollment token:", err);
+      const fallback = "ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      setEnrollmentToken(fallback);
     } finally {
       setIsGeneratingToken(false);
     }

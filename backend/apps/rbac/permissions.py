@@ -22,10 +22,12 @@ class IsOrgAdmin(IsTenantMember):
     """Requires Organization Admin role or Platform Superuser (§2.1)."""
 
     def has_permission(self, request: Request, view: APIView) -> bool:
-        if not super().has_permission(request, view):
+        if not request.user or not request.user.is_authenticated:
             return False
         if request.user.is_superuser:
             return True
+        if not super().has_permission(request, view):
+            return False
         membership: Membership = getattr(request, "membership")
         return membership.role == MembershipRole.ADMIN
 
