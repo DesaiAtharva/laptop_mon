@@ -80,6 +80,7 @@ class CreateEnrollmentTokenView(APIView):
 
         return Response(
             {
+                "token": raw_token,
                 "enrollment_token": raw_token,
                 "expires_at": token_obj.expires_at,
                 "max_uses": token_obj.max_uses,

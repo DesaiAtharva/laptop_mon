@@ -418,18 +418,15 @@ export const api = {
     expires_at: string;
     tenant_id: string;
   }> {
-    try {
-      return await request("/devices/enrollment-tokens", {
-        method: "POST",
-        body: JSON.stringify(membershipId ? { membership_id: membershipId } : {}),
-      });
-    } catch {
-      return {
-        token: `ENROLL-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        expires_at: new Date(Date.now() + 86400000).toISOString(),
-        tenant_id: "ten-prod",
-      };
-    }
+    const res = await request<any>("/devices/enrollment-tokens", {
+      method: "POST",
+      body: JSON.stringify(membershipId ? { membership_id: membershipId } : {}),
+    });
+    return {
+      token: res.token || res.enrollment_token || "",
+      expires_at: res.expires_at,
+      tenant_id: res.tenant_id || "",
+    };
   },
 
   // ── Authentication (Production Login & Session Management) ─────────────

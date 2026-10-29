@@ -42,8 +42,6 @@ export const AdminDashboard: React.FC = () => {
         if (tokRes && tokRes.token) {
           setEnrollmentToken(tokRes.token);
           setTokenExpiresAt(tokRes.expires_at);
-        } else {
-          setEnrollmentToken("ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase());
         }
       } catch (err) {
         console.error("Failed to load admin data", err);
@@ -78,20 +76,20 @@ export const AdminDashboard: React.FC = () => {
 
   async function handleGenerateToken() {
     setIsGeneratingToken(true);
+    setStatusMessage(null);
     try {
       const res = await api.createEnrollmentToken();
       if (res && res.token) {
         setEnrollmentToken(res.token);
         setTokenExpiresAt(res.expires_at);
+        setStatusMessage("New enrollment token generated successfully.");
       } else {
-        const fallback = "ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-        setEnrollmentToken(fallback);
+        setStatusMessage("Server did not return a valid enrollment token.");
       }
       setCopiedCommand(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating enrollment token:", err);
-      const fallback = "ENROLL-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-      setEnrollmentToken(fallback);
+      setStatusMessage(`Failed to create enrollment token: ${err.message || err}`);
     } finally {
       setIsGeneratingToken(false);
     }

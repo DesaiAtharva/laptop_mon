@@ -28,6 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from agent.core.crypto import CryptoManager, FileKeyStore
 from agent.core.diagnostics import DiagnosticsCollector, setup_agent_logger
 from agent.core.journal import Journal
 from agent.core.lifecycle import LifecycleManager
@@ -140,22 +141,34 @@ def run_agent(config_file: Optional[str] = None):
 
     # Enroll device if credentials are not yet present
     config = enroll_if_needed(config, config_path)
+    if not config.get("device_id"):
+        print("[ERROR] Agent enrollment required before monitoring can start.")
+        print("Please run installer with a valid enrollment token:")
+        print("  python agent/installer/install.py --server=<server_url> --token=<token>")
+        return
 
     data_dir = Path(config.get("data_dir", Path(local_app_data) / "LaptopMon" / "data"))
     logs_dir = Path(config.get("logs_dir", Path(local_app_data) / "LaptopMon" / "logs"))
+    keys_dir = data_dir / "keys"
     data_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
+    keys_dir.mkdir(parents=True, exist_ok=True)
 
     setup_agent_logger(str(logs_dir / "agent.log"))
 
     adapter = get_os_adapter()
-    journal = Journal(str(data_dir / "journal.db"))
-    spool = ScreenshotSpool(str(data_dir / "spool"))
-    policy_manager = PolicyManager()
+    keystore = FileKeyStore(str(keys_dir / "agent.key"))
+    crypto = CryptoManager(keystore)
+    if not crypto.is_key_available():
+        crypto.generate_and_save_key()
+
+    journal = Journal(str(data_dir / "journal.db"), crypto=crypto)
+    spool = ScreenshotSpool(str(data_dir / "spool"), crypto=crypto)
+    policy_manager = PolicyManager(str(data_dir / "policy_cache.json"))
     if config.get("initial_policy"):
         policy_manager.update_policy(config["initial_policy"])
-    privacy_filter = PrivacyFilter()
-    status_tracker = StatusTracker()
+    privacy_filter = PrivacyFilter(policy_manager=policy_manager)
+    status_tracker = StatusTracker(str(data_dir / "status.json"))
     lifecycle = LifecycleManager(str(data_dir), adapter, journal, status_tracker)
     diagnostics = DiagnosticsCollector()
 
