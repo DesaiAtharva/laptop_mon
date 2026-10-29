@@ -74,7 +74,8 @@ class SyncWorker:
         """
         Executes HTTP request with strict TLS certificate verification (REQ-3-1, E06).
         """
-        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        req_data = data if data else None
+        req = urllib.request.Request(url, data=req_data, headers=headers, method=method)
         # Default ssl.create_default_context() enforces TLS verification strictly
         try:
             with urllib.request.urlopen(req, timeout=15.0) as resp:
@@ -292,6 +293,7 @@ class SyncWorker:
             if comp_status in (200, 201):
                 # Verified acceptance: safely delete local file (REQ-6-1)
                 self.spool.delete_finalized(sid)
+                print(f"[SYNC] Successfully uploaded screenshot {sid[:8]} to server!")
                 return True
             else:
                 self.spool.revert_in_flight(sid)
@@ -315,10 +317,30 @@ class SyncWorker:
                 self.is_revoked = True
                 self.policy_manager.mark_revoked()
                 return False
+            if status in (200, 201) and resp_bytes:
+                try:
+                    resp_json = json.loads(resp_bytes.decode("utf-8"))
+                    server_pol_ver = resp_json.get("policy_version")
+                    current_pol = self.policy_manager.get_effective_policy()
+                    if current_pol is None or (server_pol_ver and server_pol_ver > current_pol.version):
+                        self._fetch_and_update_policy()
+                except Exception as ex:
+                    logger.debug(f"Failed to check policy update in heartbeat: {ex}")
             return status in (200, 201)
         except Exception as ex:
             logger.warning(f"Failed to send heartbeat: {ex}")
             return False
+
+    def _fetch_and_update_policy(self) -> None:
+        url = f"{self.base_api_url}/api/agent/policy"
+        try:
+            status, resp_bytes, _ = self.http_client(url, b"", self._auth_headers(), "GET")
+            if status == 200:
+                policy_data = json.loads(resp_bytes.decode("utf-8"))
+                self.policy_manager.update_policy(policy_data)
+                print(f"[POLICY] Updated monitoring policy: interval={policy_data.get('screenshot_interval_seconds')}s, version={policy_data.get('version')}")
+        except Exception as ex:
+            logger.warning(f"Failed to fetch updated policy: {ex}")
 
     def _apply_backoff(self, retry_after: Optional[float] = None) -> None:
         """Calculates exponential backoff with random jitter."""

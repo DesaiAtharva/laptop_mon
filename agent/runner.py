@@ -169,12 +169,30 @@ def run_agent(config_file: Optional[str] = None):
         policy_manager.update_policy(config["initial_policy"])
     privacy_filter = PrivacyFilter(policy_manager=policy_manager)
     status_tracker = StatusTracker(str(data_dir / "status.json"))
+    if not status_tracker.first_run_acknowledged and not status_tracker.explicitly_stopped:
+        status_tracker.acknowledge_first_run()
+
     lifecycle = LifecycleManager(str(data_dir), adapter, journal, status_tracker)
     diagnostics = DiagnosticsCollector()
 
     server_url = config.get("server_url", "https://monitor.saptasuryasolar.com")
     device_id = config.get("device_id") or "unregistered"
     device_secret = config.get("device_secret") or "none"
+
+    # Fetch active policy from server on startup
+    if device_id and device_secret and device_id != "unregistered":
+        try:
+            policy_url = f"{server_url}/api/agent/policy"
+            req = urllib.request.Request(
+                policy_url,
+                headers={"Authorization": f"Bearer {device_secret}", "X-Device-Id": device_id},
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                active_policy = json.loads(resp.read().decode("utf-8"))
+                policy_manager.update_policy(active_policy)
+                print(f"[POLICY] Active policy loaded: interval={active_policy.get('screenshot_interval_seconds')}s, version={active_policy.get('version')}")
+        except Exception as ex:
+            logger.warning("Could not fetch latest policy from server: %s", ex)
 
     sync_worker = SyncWorker(
         base_api_url=server_url,

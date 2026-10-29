@@ -98,6 +98,7 @@ class AgentScheduler:
         # Check if foreground application changed
         if app_id != self.last_foreground_app:
             self.last_foreground_app = app_id
+            print(f"[ACTIVITY] Active App: {app_id}")
             payload = {
                 "app_identifier": app_id,
                 "window_title": filtered_title,
@@ -224,6 +225,7 @@ class AgentScheduler:
             metadata={"width": capture.width, "height": capture.height, "format": capture.format},
         )
         if spooled:
+            print(f"[SCREENSHOT] Captured screenshot {spooled.screenshot_id[:8]}... ({len(capture.image_bytes)} bytes)")
             # Also record screenshot captured metadata event in journal
             je = self.journal.append_event(
                 event_type="screenshot.captured",
