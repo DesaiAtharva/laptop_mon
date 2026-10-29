@@ -124,6 +124,9 @@ class Journal:
                     (SCHEMA_VERSION, datetime.now(timezone.utc).isoformat()),
                 )
 
+            # Reset any abandoned in_flight events back to pending
+            conn.execute("UPDATE events SET upload_status = 'pending' WHERE upload_status = 'in_flight';")
+
     def _check_integrity(self) -> bool:
         """Executes PRAGMA integrity_check."""
         conn = None

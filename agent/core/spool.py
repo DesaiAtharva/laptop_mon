@@ -108,6 +108,10 @@ class ScreenshotSpool:
         conn = self._get_connection()
         stats = {"orphan_tmp_deleted": 0, "orphan_files_indexed": 0, "orphan_rows_removed": 0}
 
+        # 0. Reset any interrupted in_flight screenshots back to ready
+        with conn:
+            conn.execute("UPDATE spooled_screenshots SET status = 'ready' WHERE status = 'in_flight';")
+
         # 1. Clean up stray temp files (.tmp)
         for fname in os.listdir(self.spool_dir):
             if fname.endswith(".tmp"):
