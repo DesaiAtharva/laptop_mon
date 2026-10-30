@@ -58,6 +58,12 @@ class AppUsageInterval(TenantModel):
         default="unknown",
         help_text="Normalized app executable or process path (e.g. code.exe, chrome.exe).",
     )
+    window_title = models.CharField(
+        max_length=512,
+        blank=True,
+        default="",
+        help_text="Active foreground window or browser tab title.",
+    )
     app_classification = models.CharField(
         max_length=32,
         choices=AppClassification.choices,

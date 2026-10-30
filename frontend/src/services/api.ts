@@ -3,6 +3,7 @@ import {
   DailyMetrics,
   DisputeItem,
   MonitoringPolicy,
+  ProductivitySummaryData,
   ScreenshotItem,
   SelfViewData,
   Tenant,
@@ -469,5 +470,14 @@ export const api = {
         { id: "ten-03", name: "Stark Industries", status: "active" },
       ];
     }
+  },
+
+  // ── 24-Hour Productivity & Screen Time Breakdown ─────────────────────────
+  async getProductivitySummary(deviceId?: string, date?: string): Promise<ProductivitySummaryData> {
+    const params = new URLSearchParams();
+    if (deviceId) params.append("device_id", deviceId);
+    if (date) params.append("date", date);
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    return await request<ProductivitySummaryData>(`/reports/productivity-summary${queryString}`);
   },
 };

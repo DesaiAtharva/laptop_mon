@@ -5,10 +5,11 @@ import { EmployeeSelfView } from "./components/EmployeeSelfView";
 import { Header } from "./components/Header";
 import { Login } from "./components/Login";
 import { ManagerTeamView } from "./components/ManagerTeamView";
+import { ProductivityDashboard } from "./components/ProductivityDashboard";
 import { ScreenshotGallery } from "./components/ScreenshotGallery";
 import { useAuth } from "./context/AuthContext";
 
-type TabKey = "self-view" | "team-view" | "admin" | "screenshots" | "audit";
+type TabKey = "self-view" | "productivity" | "team-view" | "admin" | "screenshots" | "audit";
 
 export const App: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
@@ -43,6 +44,14 @@ export const App: React.FC = () => {
           >
             <span>👤</span>
             <span>My Self-View</span>
+          </button>
+
+          <button
+            className={`nav-item ${activeTab === "productivity" ? "active" : ""}`}
+            onClick={() => setActiveTab("productivity")}
+          >
+            <span>📊</span>
+            <span>24h Productivity &amp; Apps</span>
           </button>
 
           {(role === "manager" || role === "admin") && (
@@ -93,6 +102,7 @@ export const App: React.FC = () => {
 
         <main className="content-area">
           {activeTab === "self-view" && <EmployeeSelfView />}
+          {activeTab === "productivity" && <ProductivityDashboard />}
           {activeTab === "team-view" && <ManagerTeamView />}
           {activeTab === "admin" && <AdminDashboard />}
           {activeTab === "screenshots" && role === "admin" && <ScreenshotGallery />}

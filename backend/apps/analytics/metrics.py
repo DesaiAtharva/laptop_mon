@@ -143,6 +143,7 @@ def persist_device_timeline_and_metrics(
                 tenant=tenant,
                 device=device,
                 app_identifier=d.app_identifier,
+                window_title=getattr(d, "window_title", ""),
                 app_classification=d.app_classification,
                 app_classification_version=d.app_classification_version,
                 started_at=d.started_at,

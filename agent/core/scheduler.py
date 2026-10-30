@@ -33,6 +33,8 @@ from agent.core.spool import ScreenshotSpool
 from agent.core.status import StatusTracker
 from agent.core.sync import SyncWorker
 
+import os
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,6 +67,8 @@ class AgentScheduler:
 
         # State tracking
         self.last_foreground_app: Optional[str] = None
+        self.last_window_title: Optional[str] = None
+        self.last_title_change_mono: float = 0.0
         self.last_screenshot_mono: float = 0.0
         self.last_sync_mono: float = 0.0
         self.last_heartbeat_mono: float = 0.0
@@ -95,20 +99,39 @@ class AgentScheduler:
         # Filter window title per policy (E67)
         filtered_title = self.privacy_filter.filter_window_title(event.window_title)
 
-        # Check if foreground application changed
-        if app_id != self.last_foreground_app:
+        now_mono = time.monotonic()
+        app_changed = (app_id != self.last_foreground_app)
+        title_changed = (
+            filtered_title is not None
+            and filtered_title != self.last_window_title
+            and (now_mono - self.last_title_change_mono >= 1.0 or app_changed)
+        )
+
+        # Check if foreground application or active window/browser tab changed
+        if app_changed or title_changed:
             self.last_foreground_app = app_id
-            print(f"[ACTIVITY] Active App: {app_id}")
+            self.last_window_title = filtered_title
+            self.last_title_change_mono = now_mono
+
+            clean_app_name = os.path.basename(app_id) if app_id else "unknown"
+            display_title = (
+                (filtered_title[:60] + "...")
+                if filtered_title and len(filtered_title) > 60
+                else (filtered_title or "No Title")
+            )
+            print(f"[ACTIVITY] {clean_app_name} | {display_title}")
+
             payload = {
-                "app_identifier": app_id,
-                "window_title": filtered_title,
+                "app_identifier": clean_app_name,
+                "full_path": app_id,
+                "window_title": filtered_title or "",
                 "process_id": event.process_id,
             }
             je = self.journal.append_event(
                 event_type="app.active",
                 occurred_at=event.timestamp,
                 payload=payload,
-                monotonic_reference=time.monotonic(),
+                monotonic_reference=now_mono,
                 boot_segment_id=self.lifecycle.boot_segment_id,
             )
             self.status_tracker.last_event_at = event.timestamp

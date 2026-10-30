@@ -28,6 +28,7 @@ class IntervalDraft:
     ended_at: datetime.datetime
     state: str
     is_inferred: bool = False
+    window_title: str = ""
 
     @property
     def duration_seconds(self) -> float:
@@ -41,6 +42,7 @@ class TimelineState:
         self.session_open: bool = False
         self.session_id: Optional[str] = None
         self.current_app: str = "unknown"
+        self.current_title: str = ""
         self.is_idle: bool = False
         self.is_locked: bool = False
         self.is_asleep: bool = False
@@ -101,6 +103,7 @@ def split_interval_by_local_midnight(
                     ended_at=draft.ended_at,
                     state=draft.state,
                     is_inferred=draft.is_inferred,
+                    window_title=draft.window_title,
                 )
             )
             break
@@ -114,6 +117,7 @@ def split_interval_by_local_midnight(
                     ended_at=next_midnight_utc,
                     state=draft.state,
                     is_inferred=draft.is_inferred,
+                    window_title=draft.window_title,
                 )
             )
             curr_start = next_midnight_utc
@@ -199,6 +203,7 @@ class TimelineReconstructionEngine:
                 ended_at=to_time,
                 state=current_st,
                 is_inferred=is_inferred,
+                window_title=state.current_title if current_st == IntervalState.ACTIVE else "",
             )
             raw_intervals.append(draft)
             state.last_state_at = to_time
@@ -240,6 +245,11 @@ class TimelineReconstructionEngine:
                     or payload.get("app_identifier")
                     or payload.get("process_name")
                     or "unknown"
+                )
+                state.current_title = str(
+                    payload.get("window_title")
+                    or payload.get("title")
+                    or ""
                 )
                 state.is_idle = False
 

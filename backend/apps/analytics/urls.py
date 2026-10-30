@@ -9,6 +9,7 @@ from apps.analytics.views import (
     DataExportDetailView,
     DisputeDetailView,
     DisputeListCreateView,
+    ProductivitySummaryView,
     SelfViewReportView,
     TimelineReportsView,
 )
@@ -17,6 +18,7 @@ urlpatterns = [
     path("reports/daily", DailyReportsView.as_view(), name="report-daily"),
     path("reports/timeline", TimelineReportsView.as_view(), name="report-timeline"),
     path("reports/app-usage", AppUsageSummaryView.as_view(), name="report-app-usage"),
+    path("reports/productivity-summary", ProductivitySummaryView.as_view(), name="report-productivity-summary"),
     path("reports/self-view", SelfViewReportView.as_view(), name="report-self-view"),
     path("disputes", DisputeListCreateView.as_view(), name="dispute-list-create"),
     path("disputes/<uuid:pk>", DisputeDetailView.as_view(), name="dispute-detail"),

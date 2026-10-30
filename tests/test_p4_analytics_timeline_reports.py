@@ -740,3 +740,113 @@ class P4AnalyticsTimelineReportsTests(TestCase):
         )
         self.assertEqual(result["screenshots_per_device_per_day"], 96.0)
         self.assertGreater(result["retention_horizon_gb"], 0.0)
+
+    # ── 24-Hour Productivity & Screen Time Summary Tests ───────────────────────
+    def test_productivity_summary_api_with_browser_tabs_and_hourly_activity(self) -> None:
+        """Tests GET /api/reports/productivity-summary with application leaderboard, tabs, and hourly buckets."""
+        now = timezone.now()
+        t_base = now.replace(hour=9, minute=0, second=0, microsecond=0)
+
+        # Create ActivityEvent records with browser tabs
+        ActivityEvent.objects.create(
+            tenant=self.tenant_a,
+            device=self.device_a,
+            event_type="app.active",
+            occurred_at=t_base,
+            payload={
+                "app_identifier": "chrome.exe",
+                "window_title": "GitHub - DesaiAtharva/laptop_mon - Google Chrome",
+            },
+        )
+        ActivityEvent.objects.create(
+            tenant=self.tenant_a,
+            device=self.device_a,
+            event_type="app.active",
+            occurred_at=t_base + datetime.timedelta(minutes=30),
+            payload={
+                "app_identifier": "chrome.exe",
+                "window_title": "YouTube - Music - Google Chrome",
+            },
+        )
+        ActivityEvent.objects.create(
+            tenant=self.tenant_a,
+            device=self.device_a,
+            event_type="app.active",
+            occurred_at=t_base + datetime.timedelta(minutes=50),
+            payload={
+                "app_identifier": "Code.exe",
+                "window_title": "runner.py - VS Code",
+            },
+        )
+        ActivityEvent.objects.create(
+            tenant=self.tenant_a,
+            device=self.device_a,
+            event_type="session.idle_start",
+            occurred_at=t_base + datetime.timedelta(hours=2),
+            payload={"idle_seconds": 180},
+        )
+        ActivityEvent.objects.create(
+            tenant=self.tenant_a,
+            device=self.device_a,
+            event_type="session.idle_end",
+            occurred_at=t_base + datetime.timedelta(hours=2, minutes=15),
+            payload={"idle_seconds": 0},
+        )
+
+        admin_client = self._auth_client(self.admin_user_a, self.tenant_a)
+        date_str = str(t_base.date())
+        resp = admin_client.get(f"/api/reports/productivity-summary?device_id={self.device_a.id}&date={date_str}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.json()
+        self.assertEqual(data["device_id"], str(self.device_a.id))
+        self.assertEqual(data["date"], date_str)
+        self.assertIn("summary", data)
+        self.assertIn("hourly_activity", data)
+        self.assertEqual(len(data["hourly_activity"]), 24)
+        self.assertIn("app_leaderboard", data)
+
+        # Check app leaderboard contains chrome.exe with tabs
+        chrome_app = next((a for a in data["app_leaderboard"] if a["app_identifier"] == "chrome.exe"), None)
+        self.assertIsNotNone(chrome_app)
+        self.assertTrue(chrome_app["is_browser"])
+        self.assertGreater(len(chrome_app["tabs"]), 0)
+        # Check tab domain extraction
+        tab_domains = [t["domain"] for t in chrome_app["tabs"]]
+        self.assertTrue(any("github" in d or "youtube" in d for d in tab_domains))
+
+    def test_timeline_reconstruction_preserves_window_and_tab_titles(self) -> None:
+        """Tests that TimelineReconstructionEngine captures window_title in IntervalDraft."""
+        engine = TimelineReconstructionEngine(tenant=self.tenant_a, calc_version=1)
+        t0 = timezone.now()
+        events = [
+            ActivityEvent(
+                id=uuid.uuid4(),
+                tenant=self.tenant_a,
+                device=self.device_a,
+                event_type="app.active",
+                occurred_at=t0,
+                payload={"app_identifier": "chrome.exe", "window_title": "Pull Request #42 - GitHub"},
+            ),
+            ActivityEvent(
+                id=uuid.uuid4(),
+                tenant=self.tenant_a,
+                device=self.device_a,
+                event_type="app.active",
+                occurred_at=t0 + datetime.timedelta(minutes=15),
+                payload={"app_identifier": "chrome.exe", "window_title": "Project Docs - Google Docs"},
+            ),
+            ActivityEvent(
+                id=uuid.uuid4(),
+                tenant=self.tenant_a,
+                device=self.device_a,
+                event_type="session.end",
+                occurred_at=t0 + datetime.timedelta(minutes=30),
+                payload={},
+            ),
+        ]
+        intervals = engine.reconstruct_device_timeline(device=self.device_a, events=events)
+        self.assertGreaterEqual(len(intervals), 2)
+        self.assertEqual(intervals[0].window_title, "Pull Request #42 - GitHub")
+        self.assertEqual(intervals[1].window_title, "Project Docs - Google Docs")
+

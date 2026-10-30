@@ -98,6 +98,70 @@ export interface ScreenshotItem {
   delete_after?: string;
 }
 
+export interface BrowserTabUsage {
+  tab_title: string;
+  domain: string;
+  category: string;
+  total_seconds: number;
+}
+
+export interface AppLeaderboardItem {
+  app_identifier: string;
+  display_name: string;
+  total_seconds: number;
+  percentage: number;
+  classification: "productive" | "neutral" | "distracting" | "excluded";
+  category: string;
+  is_browser: boolean;
+  tabs: BrowserTabUsage[];
+}
+
+export interface HourlyActivityItem {
+  hour: number;
+  label: string;
+  active_seconds: number;
+  idle_seconds: number;
+  productive_seconds: number;
+}
+
+export interface ProductivityTimelineInterval {
+  id: string;
+  started_at: string;
+  ended_at: string;
+  duration_seconds: number;
+  state: string;
+  app_identifier: string;
+  window_title: string;
+  classification: string;
+}
+
+export interface ProductivitySummaryData {
+  device_id: string | null;
+  device_name: string | null;
+  os?: string;
+  date: string;
+  summary: {
+    active_seconds: number;
+    idle_seconds: number;
+    productive_seconds: number;
+    neutral_seconds: number;
+    distracting_seconds: number;
+    offline_seconds: number;
+    productive_share: number;
+    total_screenshots: number;
+  };
+  hourly_activity: HourlyActivityItem[];
+  app_leaderboard: AppLeaderboardItem[];
+  timeline_intervals: ProductivityTimelineInterval[];
+  available_devices: {
+    id: string;
+    hostname: string;
+    os: string;
+    status: string;
+    last_seen_at: string | null;
+  }[];
+}
+
 export type DisputeStatus = "open" | "under_review" | "resolved" | "rejected";
 
 export interface DisputeItem {

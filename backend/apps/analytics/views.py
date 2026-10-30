@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import datetime
 import logging
+import os
+import re
 import uuid
 from typing import Any
 
@@ -502,3 +504,283 @@ class DisputeDetailView(APIView):
         )
 
         return Response(DisputeSerializer(dispute).data, status=status.HTTP_200_OK)
+
+
+def extract_domain_from_title(title: str) -> str:
+    """Extract domain or prominent site name from window/tab title."""
+    if not title:
+        return "General"
+    title_lower = title.lower()
+
+    # Keyword mappings to canonical domain names
+    known_site_keywords = [
+        ("github", "github.com"),
+        ("gitlab", "gitlab.com"),
+        ("bitbucket", "bitbucket.org"),
+        ("stackoverflow", "stackoverflow.com"),
+        ("youtube", "youtube.com"),
+        ("gmail", "mail.google.com"),
+        ("google search", "google.com"),
+        ("google docs", "docs.google.com"),
+        ("google sheets", "sheets.google.com"),
+        ("slack", "slack.com"),
+        ("teams", "teams.microsoft.com"),
+        ("notion", "notion.so"),
+        ("figma", "figma.com"),
+        ("jira", "jira.atlassian.com"),
+        ("confluence", "confluence.atlassian.com"),
+        ("chatgpt", "chatgpt.com"),
+        ("openai", "openai.com"),
+        ("aws", "aws.amazon.com"),
+        ("facebook", "facebook.com"),
+        ("instagram", "instagram.com"),
+        ("twitter", "twitter.com"),
+        ("x.com", "x.com"),
+        ("linkedin", "linkedin.com"),
+        ("reddit", "reddit.com"),
+        ("netflix", "netflix.com"),
+        ("spotify", "spotify.com"),
+        ("wikipedia", "wikipedia.org"),
+        ("localhost", "localhost"),
+    ]
+    for kw, domain in known_site_keywords:
+        if kw in title_lower:
+            return domain
+
+    # Explicit domain pattern like site.com, site.org, site.io
+    match = re.search(r"([a-zA-Z0-9-]+\.(?:com|org|net|io|ai|in|co|app|dev))", title)
+    if match:
+        return match.group(1).lower()
+
+    # Clean browser suffix (e.g. "Page - Google Chrome")
+    parts = [p.strip() for p in re.split(r"[-|—•–]", title) if p.strip()]
+    if parts:
+        cleaned_parts = [
+            p for p in parts
+            if p.lower() not in ("google chrome", "chrome", "microsoft edge", "edge", "brave", "firefox", "opera")
+        ]
+        if cleaned_parts:
+            return cleaned_parts[0]
+    return title[:30]
+
+
+def categorize_domain_or_app(name: str) -> str:
+    """Classifies application or domain into high-level business functional buckets."""
+    nl = name.lower()
+    if any(k in nl for k in ("code", "visual studio", "github", "gitlab", "terminal", "powershell", "cmd", "sublime", "pycharm", "intellij", "cursor")):
+        return "Development"
+    if any(k in nl for k in ("slack", "teams", "discord", "zoom", "meet", "webex", "outlook", "gmail", "mail")):
+        return "Communication"
+    if any(k in nl for k in ("docs.google", "notion", "confluence", "jira", "excel", "word", "powerpoint", "sheets", "figma", "canva", "trello")):
+        return "Productivity & Docs"
+    if any(k in nl for k in ("youtube", "netflix", "spotify", "twitter", "x.com", "facebook", "instagram", "reddit", "twitch", "prime")):
+        return "Entertainment & Social"
+    if any(k in nl for k in ("chrome", "msedge", "brave", "firefox", "browser", "safari")):
+        return "Web Browsing"
+    return "Other Utilities"
+
+
+class ProductivitySummaryView(APIView):
+    """GET /api/reports/productivity-summary
+    Delivers a full 24-hour dynamic productivity, application, and browser-tab breakdown.
+    """
+    permission_classes = [IsTenantMember]
+
+    def get(self, request: Request) -> Response:
+        membership = getattr(request, "membership")
+        tenant = membership.tenant
+
+        device_qs = Device.objects.for_tenant(tenant)
+        device_qs = scope_queryset_by_role(device_qs, request, device_field="id")
+
+        device_id_str = request.query_params.get("device_id")
+        target_device = None
+        if device_id_str:
+            target_device = device_qs.filter(id=device_id_str).first()
+            if not target_device:
+                raise EntityNotFound("Requested device not found or access denied.")
+        else:
+            target_device = device_qs.order_by("-last_seen_at").first()
+
+        available_devices = [
+            {
+                "id": str(d.id),
+                "hostname": d.hostname,
+                "os": d.os,
+                "status": d.status,
+                "last_seen_at": d.last_seen_at.isoformat() if d.last_seen_at else None,
+            }
+            for d in device_qs.order_by("hostname")
+        ]
+
+        if not target_device:
+            return Response({
+                "device_id": None,
+                "device_name": None,
+                "date": str(timezone.now().date()),
+                "summary": {
+                    "active_seconds": 0, "idle_seconds": 0, "productive_seconds": 0,
+                    "neutral_seconds": 0, "distracting_seconds": 0, "offline_seconds": 86400,
+                    "productive_share": 0, "total_screenshots": 0
+                },
+                "hourly_activity": [{"hour": h, "label": f"{h:02d}:00", "active_seconds": 0, "idle_seconds": 0, "productive_seconds": 0} for h in range(24)],
+                "app_leaderboard": [],
+                "timeline_intervals": [],
+                "available_devices": available_devices,
+            })
+
+        date_str = request.query_params.get("date")
+        target_date = parse_date(date_str) if date_str else timezone.now().date()
+        if not target_date:
+            target_date = timezone.now().date()
+
+        # Build 24h UTC window for target_date
+        window_start = datetime.datetime.combine(target_date, datetime.time.min, tzinfo=datetime.timezone.utc)
+        window_end = datetime.datetime.combine(target_date, datetime.time.max, tzinfo=datetime.timezone.utc)
+
+        # Trigger on-the-fly dynamic persistence from raw events
+        from apps.analytics.metrics import persist_device_timeline_and_metrics
+        try:
+            persist_device_timeline_and_metrics(
+                device=target_device,
+                window_start=window_start,
+                window_end=window_end,
+                calc_version=1,
+            )
+        except Exception as ex:
+            logger.warning("Could not recompute device metrics: %s", ex)
+
+        # Query intervals
+        intervals_qs = AppUsageInterval.objects.filter(
+            device=target_device,
+            started_at__gte=window_start,
+            ended_at__lte=window_end,
+        ).order_by("started_at")
+        intervals = list(intervals_qs)
+
+        # Count screenshots
+        from apps.screenshots.models import Screenshot
+        screenshot_count = Screenshot.objects.filter(
+            device=target_device,
+            captured_at__gte=window_start,
+            captured_at__lte=window_end,
+        ).count()
+
+        # Compute summary
+        active_sec = sum(i.duration_seconds for i in intervals if i.state == IntervalState.ACTIVE)
+        idle_sec = sum(i.duration_seconds for i in intervals if i.state == IntervalState.IDLE)
+        prod_sec = sum(i.duration_seconds for i in intervals if i.state == IntervalState.ACTIVE and i.app_classification == "productive")
+        neut_sec = sum(i.duration_seconds for i in intervals if i.state == IntervalState.ACTIVE and i.app_classification == "neutral")
+        dist_sec = sum(i.duration_seconds for i in intervals if i.state == IntervalState.ACTIVE and i.app_classification == "distracting")
+        offline_sec = max(0.0, 86400.0 - (active_sec + idle_sec))
+        prod_share = round((prod_sec / max(1.0, prod_sec + neut_sec + dist_sec)) * 100.0, 1)
+
+        # 24 Hourly buckets (0..23)
+        hourly_data = []
+        for h in range(24):
+            h_start = window_start + datetime.timedelta(hours=h)
+            h_end = h_start + datetime.timedelta(hours=1)
+            h_active = 0.0
+            h_idle = 0.0
+            h_prod = 0.0
+            for inv in intervals:
+                overlap_start = max(inv.started_at, h_start)
+                overlap_end = min(inv.ended_at, h_end)
+                if overlap_end > overlap_start:
+                    sec = (overlap_end - overlap_start).total_seconds()
+                    if inv.state == IntervalState.ACTIVE:
+                        h_active += sec
+                        if inv.app_classification == "productive":
+                            h_prod += sec
+                    elif inv.state == IntervalState.IDLE:
+                        h_idle += sec
+            hourly_data.append({
+                "hour": h,
+                "label": f"{h:02d}:00",
+                "active_seconds": round(h_active, 1),
+                "idle_seconds": round(h_idle, 1),
+                "productive_seconds": round(h_prod, 1),
+            })
+
+        # App Leaderboard with browser tab breakdown
+        apps_dict: dict[str, Any] = {}
+        for inv in intervals:
+            if inv.state != IntervalState.ACTIVE:
+                continue
+            app_id = inv.app_identifier or "unknown"
+            if app_id not in apps_dict:
+                is_browser = any(b in app_id.lower() for b in ("chrome", "msedge", "edge", "brave", "firefox", "safari"))
+                apps_dict[app_id] = {
+                    "app_identifier": app_id,
+                    "display_name": os.path.basename(app_id),
+                    "total_seconds": 0.0,
+                    "classification": inv.app_classification,
+                    "category": categorize_domain_or_app(app_id),
+                    "is_browser": is_browser,
+                    "tabs_dict": {},
+                }
+            apps_dict[app_id]["total_seconds"] += inv.duration_seconds
+            w_title = inv.window_title.strip() if inv.window_title else ""
+            if w_title:
+                tabs = apps_dict[app_id]["tabs_dict"]
+                if w_title not in tabs:
+                    domain = extract_domain_from_title(w_title)
+                    tabs[w_title] = {
+                        "tab_title": w_title,
+                        "domain": domain,
+                        "category": categorize_domain_or_app(domain if domain != "General" else w_title),
+                        "total_seconds": 0.0,
+                    }
+                tabs[w_title]["total_seconds"] += inv.duration_seconds
+
+        app_leaderboard = []
+        for app_id, data in apps_dict.items():
+            tot = data["total_seconds"]
+            tabs_list = sorted(data["tabs_dict"].values(), key=lambda t: t["total_seconds"], reverse=True)
+            app_leaderboard.append({
+                "app_identifier": app_id,
+                "display_name": data["display_name"],
+                "total_seconds": round(tot, 1),
+                "percentage": round((tot / max(1.0, active_sec)) * 100.0, 1),
+                "classification": data["classification"],
+                "category": data["category"],
+                "is_browser": data["is_browser"],
+                "tabs": tabs_list,
+            })
+        app_leaderboard.sort(key=lambda a: a["total_seconds"], reverse=True)
+
+        # Timeline intervals for 24-hr Gantt chart
+        timeline_serialized = [
+            {
+                "id": str(inv.id),
+                "started_at": inv.started_at.isoformat(),
+                "ended_at": inv.ended_at.isoformat(),
+                "duration_seconds": round(inv.duration_seconds, 1),
+                "state": inv.state,
+                "app_identifier": inv.app_identifier,
+                "window_title": inv.window_title or "",
+                "classification": inv.app_classification,
+            }
+            for inv in intervals
+        ]
+
+        return Response({
+            "device_id": str(target_device.id),
+            "device_name": target_device.hostname,
+            "os": target_device.os,
+            "date": str(target_date),
+            "summary": {
+                "active_seconds": round(active_sec, 1),
+                "idle_seconds": round(idle_sec, 1),
+                "productive_seconds": round(prod_sec, 1),
+                "neutral_seconds": round(neut_sec, 1),
+                "distracting_seconds": round(dist_sec, 1),
+                "offline_seconds": round(offline_sec, 1),
+                "productive_share": prod_share,
+                "total_screenshots": screenshot_count,
+            },
+            "hourly_activity": hourly_data,
+            "app_leaderboard": app_leaderboard,
+            "timeline_intervals": timeline_serialized,
+            "available_devices": available_devices,
+        })

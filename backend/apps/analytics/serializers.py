@@ -44,6 +44,7 @@ class AppUsageIntervalSerializer(serializers.ModelSerializer):
             "id",
             "device_id",
             "app_identifier",
+            "window_title",
             "app_classification",
             "app_classification_version",
             "started_at",
