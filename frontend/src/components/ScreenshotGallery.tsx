@@ -2,6 +2,108 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../services/api";
 import { ScreenshotItem } from "../types";
 
+const ScreenshotThumbnail: React.FC<{
+  item: ScreenshotItem;
+  onClick?: () => void;
+}> = ({ item, onClick }) => {
+  const [src, setSrc] = useState<string | null>(item.thumbnail_url || item.view_url || null);
+  const [loading, setLoading] = useState<boolean>(!item.thumbnail_url && !item.view_url);
+  const [failed, setFailed] = useState<boolean>(false);
+  const [retried, setRetried] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!item.thumbnail_url && !item.view_url) {
+      setLoading(true);
+      api
+        .getScreenshotViewUrl(item.id)
+        .then((res) => {
+          if (res && res.view_url) {
+            setSrc(res.view_url);
+            setFailed(false);
+          } else {
+            setFailed(true);
+          }
+        })
+        .catch(() => setFailed(true))
+        .finally(() => setLoading(false));
+    } else {
+      setSrc(item.thumbnail_url || item.view_url || null);
+      setFailed(false);
+    }
+  }, [item.id, item.thumbnail_url, item.view_url]);
+
+  const handleError = () => {
+    if (!retried) {
+      setRetried(true);
+      api
+        .getScreenshotViewUrl(item.id)
+        .then((res) => {
+          if (res && res.view_url) {
+            setSrc(res.view_url);
+          } else {
+            setFailed(true);
+          }
+        })
+        .catch(() => setFailed(true));
+    } else {
+      setFailed(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0f172a",
+          color: "var(--text-subtle)",
+          fontSize: "0.7rem",
+        }}
+      >
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (failed || !src) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#1e1e24",
+          color: "var(--text-subtle)",
+          fontSize: "0.68rem",
+          gap: "2px",
+          textAlign: "center",
+          padding: "2px",
+        }}
+        onClick={onClick}
+      >
+        <span>🖼️</span>
+        <span style={{ fontSize: "0.65rem", color: "var(--text-subtle)" }}>Storage Migrated</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt="Capture thumbnail"
+      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      onError={handleError}
+    />
+  );
+};
+
 export const ScreenshotGallery: React.FC = () => {
   const [screenshots, setScreenshots] = useState<ScreenshotItem[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
@@ -659,7 +761,6 @@ export const ScreenshotGallery: React.FC = () => {
                   timeScreenshots.map((sc, idx) => {
                     const capturedDate = new Date(sc.captured_at);
                     const isFinalized = sc.status === "finalized";
-                    const imageUrl = sc.thumbnail_url || sc.view_url;
 
                     return (
                       <tr
@@ -692,20 +793,7 @@ export const ScreenshotGallery: React.FC = () => {
                             }}
                             onClick={() => handleOpenModal(sc)}
                           >
-                            <img
-                              src={imageUrl || ""}
-                              alt="Capture"
-                              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                              onError={async (e) => {
-                                // Silent fallback / fresh signature fetch
-                                try {
-                                  const fresh = await api.getScreenshotViewUrl(sc.id);
-                                  if (fresh.view_url) {
-                                    (e.target as HTMLImageElement).src = fresh.view_url;
-                                  }
-                                } catch {}
-                              }}
-                            />
+                            <ScreenshotThumbnail item={sc} onClick={() => handleOpenModal(sc)} />
                             <div
                               style={{
                                 position: "absolute",

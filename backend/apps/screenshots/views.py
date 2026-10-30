@@ -136,9 +136,9 @@ class AgentScreenshotCompleteView(APIView):
 
 
 class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 25
+    page_size = 1000
     page_size_query_param = "page_size"
-    max_page_size = 100
+    max_page_size = 5000
 
 
 class ScreenshotListView(APIView):
@@ -147,13 +147,17 @@ class ScreenshotListView(APIView):
     Metadata gallery search behind separate screenshot permission flag.
     """
 
-    permission_classes = [IsTenantMember, HasScreenshotPermission]
+    permission_classes = [IsTenantMember, IsOrgAdmin]
 
     def get(self, request: Request) -> Response:
         membership = getattr(request, "membership")
         tenant = membership.tenant
 
-        qs = Screenshot.objects.for_tenant(tenant).exclude(status=ScreenshotStatus.DELETED)
+        qs = (
+            Screenshot.objects.for_tenant(tenant)
+            .exclude(status=ScreenshotStatus.DELETED)
+            .order_by("-captured_at")
+        )
 
         # Scoping by role (§2.2, E47)
         if membership.role == MembershipRole.MANAGER:
@@ -191,7 +195,7 @@ class ScreenshotListView(APIView):
 class ScreenshotViewUrlView(APIView):
     """POST /api/screenshots/{id}/view-url (§8.4, §10.2, REQ-10-4, E49)."""
 
-    permission_classes = [IsTenantMember, HasScreenshotPermission]
+    permission_classes = [IsTenantMember, IsOrgAdmin]
 
     def post(self, request: Request, pk: uuid.UUID) -> Response:
         membership = getattr(request, "membership")

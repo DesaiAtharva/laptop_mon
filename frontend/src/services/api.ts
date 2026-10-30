@@ -279,7 +279,7 @@ export const api = {
   // ── Screenshots Gallery (E69) ─────────────────────────────────────────────
   async getScreenshots(): Promise<{ results: ScreenshotItem[] }> {
     try {
-      return await request<{ results: ScreenshotItem[] }>("/screenshots");
+      return await request<{ results: ScreenshotItem[] }>("/screenshots?page_size=1000");
     } catch {
       return {
         results: [
