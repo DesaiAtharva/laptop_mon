@@ -21,7 +21,7 @@ import time
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 # Ensure project root is in sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any
+from typing import Any, Dict, Optional
 
 from django.core.exceptions import PermissionDenied
 from django.utils.dateparse import parse_datetime
