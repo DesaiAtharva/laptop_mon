@@ -326,17 +326,25 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
     def _is_s3_active(self) -> bool:
         return bool(self.s3_client and (self.access_key or self.endpoint_url))
 
+    def _get_s3_key(self, object_key: str) -> str:
+        clean = object_key.replace("\\", "/").lstrip("/")
+        prefix = getattr(settings, "SCREENSHOT_STORAGE_PREFIX", "Monitor").strip("/")
+        if prefix and not clean.startswith(f"{prefix}/"):
+            return f"{prefix}/{clean}"
+        return clean
+
     def generate_presigned_upload_url(
         self, object_key: str, content_type: str, expires_in: int = 900
     ) -> Dict[str, Any]:
         if not self._is_s3_active():
             return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
+        s3_key = self._get_s3_key(object_key)
         try:
             url = self.s3_client.generate_presigned_url(
                 ClientMethod="put_object",
                 Params={
                     "Bucket": self.bucket,
-                    "Key": object_key,
+                    "Key": s3_key,
                     "ContentType": content_type,
                 },
                 ExpiresIn=expires_in,
@@ -355,11 +363,12 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
     def generate_presigned_view_url(self, object_key: str, expires_in: int = 604800) -> str:
         if not self._is_s3_active():
             return self._fallback.generate_presigned_view_url(object_key, expires_in)
+        s3_key = self._get_s3_key(object_key)
         try:
             return str(
                 self.s3_client.generate_presigned_url(
                     ClientMethod="get_object",
-                    Params={"Bucket": self.bucket, "Key": object_key},
+                    Params={"Bucket": self.bucket, "Key": s3_key},
                     ExpiresIn=expires_in,
                 )
             )
@@ -387,8 +396,9 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
     def object_exists(self, object_key: str) -> bool:
         if self._is_s3_active():
             from botocore.exceptions import ClientError
+            s3_key = self._get_s3_key(object_key)
             try:
-                self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
+                self.s3_client.head_object(Bucket=self.bucket, Key=s3_key)
                 return True
             except ClientError as e:
                 if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
@@ -400,7 +410,8 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
 
     def get_object_metadata(self, object_key: str) -> Dict[str, Any]:
         if self._is_s3_active():
-            response = self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
+            s3_key = self._get_s3_key(object_key)
+            response = self.s3_client.head_object(Bucket=self.bucket, Key=s3_key)
             return {
                 "content_length": response.get("ContentLength", 0),
                 "content_type": response.get("ContentType", ""),
@@ -410,7 +421,8 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
 
     def get_object_bytes(self, object_key: str) -> bytes:
         if self._is_s3_active():
-            response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
+            s3_key = self._get_s3_key(object_key)
+            response = self.s3_client.get_object(Bucket=self.bucket, Key=s3_key)
             body: bytes = response["Body"].read()
             return body
         return self._fallback.get_object_bytes(object_key)
@@ -419,9 +431,10 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         self, object_key: str, data: bytes, content_type: str = "image/jpeg"
     ) -> None:
         if self._is_s3_active():
+            s3_key = self._get_s3_key(object_key)
             self.s3_client.put_object(
                 Bucket=self.bucket,
-                Key=object_key,
+                Key=s3_key,
                 Body=data,
                 ContentType=content_type,
             )
@@ -430,11 +443,12 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
 
     def delete_object(self, object_key: str) -> bool:
         if self._is_s3_active():
+            s3_key = self._get_s3_key(object_key)
             try:
-                self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
+                self.s3_client.delete_object(Bucket=self.bucket, Key=s3_key)
                 return True
             except Exception as e:
-                logger.error("Failed to delete S3 object %s: %s", object_key, str(e))
+                logger.error("Failed to delete S3 object %s: %s", s3_key, str(e))
                 return False
         return self._fallback.delete_object(object_key)
 

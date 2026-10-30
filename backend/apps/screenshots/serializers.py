@@ -30,6 +30,8 @@ class ScreenshotMetadataSerializer(serializers.ModelSerializer):
 
     device_id = serializers.UUIDField(source="device.id", read_only=True)
     device_hostname = serializers.CharField(source="device.hostname", read_only=True)
+    view_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Screenshot
@@ -46,8 +48,27 @@ class ScreenshotMetadataSerializer(serializers.ModelSerializer):
             "delete_after",
             "legal_hold",
             "created_at",
+            "view_url",
+            "thumbnail_url",
         ]
         read_only_fields = fields
+
+    def get_view_url(self, obj: Screenshot) -> str:
+        try:
+            from apps.screenshots.storage import get_storage_backend
+            storage = get_storage_backend()
+            return storage.generate_presigned_view_url(obj.object_key, expires_in=604800)
+        except Exception:
+            return ""
+
+    def get_thumbnail_url(self, obj: Screenshot) -> str:
+        try:
+            from apps.screenshots.storage import get_storage_backend
+            storage = get_storage_backend()
+            target_key = obj.thumbnail_key if obj.thumbnail_key else obj.object_key
+            return storage.generate_presigned_view_url(target_key, expires_in=604800)
+        except Exception:
+            return ""
 
 
 class LegalHoldRequestSerializer(serializers.Serializer):
