@@ -60,9 +60,9 @@ class SecurityHeadersMiddleware:
             "default-src 'self'; "
             "script-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            "img-src 'self' data: blob:; "
+            "img-src 'self' data: blob: https://*.s3.amazonaws.com https://*.amazonaws.com https://images.unsplash.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
-            "connect-src 'self'; "
+            "connect-src 'self' https://*.s3.amazonaws.com https://*.amazonaws.com; "
             "frame-ancestors 'none';"
         )
 
