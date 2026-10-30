@@ -157,6 +157,8 @@ class SyncWorker:
             # Delete accepted and already_accepted (REQ-6-1)
             ids_to_delete = list(set(accepted_ids + already_accepted_ids))
             deleted_count = self.journal.delete_accepted(ids_to_delete)
+            if deleted_count > 0:
+                print(f"[SYNC] Synced {deleted_count} telemetry event(s) to server")
 
             # Revert any remaining events not accepted
             remaining = set(event_ids) - set(ids_to_delete)

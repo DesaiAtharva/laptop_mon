@@ -279,6 +279,7 @@ def create_upload_intent(
         }
 
 
+@transaction.atomic
 def complete_screenshot_upload(
     device: Device,
     screenshot_id: uuid.UUID,
