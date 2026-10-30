@@ -297,10 +297,12 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "")
         self.access_key = (
             getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
+            or os.environ.get("STORAGE_ACCESS_KEY", "")
             or os.environ.get("AWS_ACCESS_KEY_ID", "")
         )
         self.secret_key = (
             getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
+            or os.environ.get("STORAGE_SECRET_KEY", "")
             or os.environ.get("AWS_SECRET_ACCESS_KEY", "")
         )
         self.region = (
