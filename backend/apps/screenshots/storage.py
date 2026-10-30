@@ -284,9 +284,18 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
         self._fallback = FileSystemObjectStorageBackend()
         self.bucket = getattr(settings, "SCREENSHOT_STORAGE_BUCKET", "laptop-mon-screenshots")
         self.endpoint_url = getattr(settings, "SCREENSHOT_STORAGE_ENDPOINT", "")
-        self.access_key = getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
-        self.secret_key = getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
-        self.region = getattr(settings, "SCREENSHOT_STORAGE_REGION", "us-east-1")
+        self.access_key = (
+            getattr(settings, "SCREENSHOT_STORAGE_ACCESS_KEY", "")
+            or os.environ.get("AWS_ACCESS_KEY_ID", "")
+        )
+        self.secret_key = (
+            getattr(settings, "SCREENSHOT_STORAGE_SECRET_KEY", "")
+            or os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+        )
+        self.region = (
+            getattr(settings, "SCREENSHOT_STORAGE_REGION", "")
+            or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+        )
 
         try:
             self.s3_client = boto3.client(
@@ -301,10 +310,13 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             logger.warning("Could not initialize S3 client: %s; using local fallback.", exc)
             self.s3_client = None
 
+    def _is_s3_active(self) -> bool:
+        return bool(self.s3_client and (self.access_key or self.endpoint_url))
+
     def generate_presigned_upload_url(
         self, object_key: str, content_type: str, expires_in: int = 900
     ) -> Dict[str, Any]:
-        if not self.s3_client or not (self.access_key or self.endpoint_url):
+        if not self._is_s3_active():
             return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
         try:
             url = self.s3_client.generate_presigned_url(
@@ -328,7 +340,7 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
 
     def generate_presigned_view_url(self, object_key: str, expires_in: int = 300) -> str:
-        if not self.s3_client or not (self.access_key or self.endpoint_url):
+        if not self._is_s3_active():
             return self._fallback.generate_presigned_view_url(object_key, expires_in)
         try:
             return str(
@@ -360,65 +372,58 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             return True
 
     def object_exists(self, object_key: str) -> bool:
-        if self._fallback.object_exists(object_key):
-            return True
-        if not self.s3_client:
-            return False
-        from botocore.exceptions import ClientError
-        try:
-            self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
-            return True
-        except ClientError as e:
-            if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
+        if self._is_s3_active():
+            from botocore.exceptions import ClientError
+            try:
+                self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
+                return True
+            except ClientError as e:
+                if e.response["Error"]["Code"] in ("404", "NoSuchKey"):
+                    return False
+                raise
+            except Exception:
                 return False
-            raise
-        except Exception:
-            return False
+        return self._fallback.object_exists(object_key)
 
     def get_object_metadata(self, object_key: str) -> Dict[str, Any]:
-        if self._fallback.object_exists(object_key):
-            return self._fallback.get_object_metadata(object_key)
-        response = self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
-        return {
-            "content_length": response.get("ContentLength", 0),
-            "content_type": response.get("ContentType", ""),
-            "etag": response.get("ETag", "").strip('"'),
-        }
+        if self._is_s3_active():
+            response = self.s3_client.head_object(Bucket=self.bucket, Key=object_key)
+            return {
+                "content_length": response.get("ContentLength", 0),
+                "content_type": response.get("ContentType", ""),
+                "etag": response.get("ETag", "").strip('"'),
+            }
+        return self._fallback.get_object_metadata(object_key)
 
     def get_object_bytes(self, object_key: str) -> bytes:
-        if self._fallback.object_exists(object_key):
-            return self._fallback.get_object_bytes(object_key)
-        response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
-        body: bytes = response["Body"].read()
-        return body
+        if self._is_s3_active():
+            response = self.s3_client.get_object(Bucket=self.bucket, Key=object_key)
+            body: bytes = response["Body"].read()
+            return body
+        return self._fallback.get_object_bytes(object_key)
 
     def put_object_bytes(
         self, object_key: str, data: bytes, content_type: str = "image/jpeg"
     ) -> None:
-        if not self.s3_client or not (self.access_key or self.endpoint_url):
-            self._fallback.put_object_bytes(object_key, data, content_type)
-            return
-        try:
+        if self._is_s3_active():
             self.s3_client.put_object(
                 Bucket=self.bucket,
                 Key=object_key,
                 Body=data,
                 ContentType=content_type,
             )
-        except Exception as ex:
-            logger.warning("S3 put_object_bytes failed (%s), using local fallback", ex)
-            self._fallback.put_object_bytes(object_key, data, content_type)
+            return
+        self._fallback.put_object_bytes(object_key, data, content_type)
 
     def delete_object(self, object_key: str) -> bool:
-        deleted_local = self._fallback.delete_object(object_key)
-        if not self.s3_client:
-            return deleted_local
-        try:
-            self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
-            return True
-        except Exception as e:
-            logger.error("Failed to delete S3 object %s: %s", object_key, str(e))
-            return deleted_local
+        if self._is_s3_active():
+            try:
+                self.s3_client.delete_object(Bucket=self.bucket, Key=object_key)
+                return True
+            except Exception as e:
+                logger.error("Failed to delete S3 object %s: %s", object_key, str(e))
+                return False
+        return self._fallback.delete_object(object_key)
 
     def verify_deletion(self, object_key: str) -> bool:
         return not self.object_exists(object_key)
