@@ -86,6 +86,7 @@ export interface AppUsageSummary {
 export interface ScreenshotItem {
   id: string;
   device_id: string;
+  device_hostname?: string;
   captured_at: string;
   width: number;
   height: number;
@@ -93,6 +94,8 @@ export interface ScreenshotItem {
   status?: string;
   thumbnail_url?: string;
   view_url?: string;
+  legal_hold?: boolean;
+  delete_after?: string;
 }
 
 export type DisputeStatus = "open" | "under_review" | "resolved" | "rejected";

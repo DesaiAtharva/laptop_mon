@@ -65,7 +65,7 @@ export const App: React.FC = () => {
             </button>
           )}
 
-          {(role === "admin" || role === "manager") && (
+          {role === "admin" && (
             <button
               className={`nav-item ${activeTab === "screenshots" ? "active" : ""}`}
               onClick={() => setActiveTab("screenshots")}
@@ -95,7 +95,7 @@ export const App: React.FC = () => {
           {activeTab === "self-view" && <EmployeeSelfView />}
           {activeTab === "team-view" && <ManagerTeamView />}
           {activeTab === "admin" && <AdminDashboard />}
-          {activeTab === "screenshots" && <ScreenshotGallery />}
+          {activeTab === "screenshots" && role === "admin" && <ScreenshotGallery />}
           {activeTab === "audit" && <AuditLogViewer />}
         </main>
       </div>

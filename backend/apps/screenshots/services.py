@@ -404,7 +404,7 @@ def generate_screenshot_view_url(
         if screenshot.device.membership_id != membership.id:
             raise PermissionDenied("Employee may only view screenshots from own devices.")
 
-    expires_in = getattr(settings, "SCREENSHOT_VIEW_URL_EXPIRY_SECONDS", 300)
+    expires_in = getattr(settings, "SCREENSHOT_VIEW_URL_EXPIRY_SECONDS", 604800)
     storage = get_storage_backend()
     view_url = storage.generate_presigned_view_url(screenshot.object_key, expires_in=expires_in)
 

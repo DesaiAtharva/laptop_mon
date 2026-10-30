@@ -222,7 +222,7 @@ class FileSystemObjectStorageBackend(BaseScreenshotStorage):
             "expires_at": (timezone.now() + datetime.timedelta(seconds=expires_in)).isoformat(),
         }
 
-    def generate_presigned_view_url(self, object_key: str, expires_in: int = 300) -> str:
+    def generate_presigned_view_url(self, object_key: str, expires_in: int = 604800) -> str:
         exp_ts = int(timezone.now().timestamp()) + expires_in
         sig = self._sign(f"view:{object_key}:{exp_ts}")
         query = urlencode({"key": object_key, "expires": exp_ts, "sig": sig})
@@ -352,7 +352,7 @@ class S3ObjectStorageBackend(BaseScreenshotStorage):
             logger.warning("S3 generate_presigned_upload_url failed (%s), using local fallback", ex)
             return self._fallback.generate_presigned_upload_url(object_key, content_type, expires_in)
 
-    def generate_presigned_view_url(self, object_key: str, expires_in: int = 300) -> str:
+    def generate_presigned_view_url(self, object_key: str, expires_in: int = 604800) -> str:
         if not self._is_s3_active():
             return self._fallback.generate_presigned_view_url(object_key, expires_in)
         try:
