@@ -18,6 +18,15 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
+def get_storage_prefix() -> str:
+    prefix = getattr(
+        settings,
+        "SCREENSHOT_STORAGE_PREFIX",
+        os.environ.get("SCREENSHOT_STORAGE_PREFIX", "Monitor"),
+    ).strip("/")
+    return f"{prefix}/" if prefix else ""
+
+
 def generate_screenshot_object_key(
     tenant_id: uuid.UUID | str,
     device_id: uuid.UUID | str,
@@ -29,8 +38,9 @@ def generate_screenshot_object_key(
     clean_ext = extension.lstrip(".").lower()
     if clean_ext not in ("jpg", "jpeg", "webp"):
         clean_ext = "jpg"
+    prefix = get_storage_prefix()
     return (
-        f"tenants/{tenant_id}/devices/{device_id}/"
+        f"{prefix}tenants/{tenant_id}/devices/{device_id}/"
         f"{captured_at.year:04d}/{captured_at.month:02d}/{captured_at.day:02d}/"
         f"{screenshot_id}.{clean_ext}"
     )
@@ -43,8 +53,9 @@ def generate_thumbnail_object_key(
     captured_at: datetime.datetime,
 ) -> str:
     """Generates tenant-scoped object key for thumbnail derivative (§10.2)."""
+    prefix = get_storage_prefix()
     return (
-        f"tenants/{tenant_id}/devices/{device_id}/"
+        f"{prefix}tenants/{tenant_id}/devices/{device_id}/"
         f"{captured_at.year:04d}/{captured_at.month:02d}/{captured_at.day:02d}/"
         f"{screenshot_id}_thumb.webp"
     )
