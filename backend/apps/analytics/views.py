@@ -722,12 +722,15 @@ class ProductivitySummaryView(APIView):
                 "productive_seconds": round(h_prod, 1),
             })
 
-        # App Leaderboard with browser tab breakdown
+        # App Leaderboard with browser tab breakdown and session timings
         apps_dict: dict[str, Any] = {}
         for inv in intervals:
             if inv.state != IntervalState.ACTIVE:
                 continue
             app_id = inv.app_identifier or "unknown"
+            start_iso = inv.started_at.isoformat()
+            end_iso = inv.ended_at.isoformat()
+
             if app_id not in apps_dict:
                 is_browser = any(b in app_id.lower() for b in ("chrome", "msedge", "edge", "brave", "firefox", "safari"))
                 apps_dict[app_id] = {
@@ -737,10 +740,41 @@ class ProductivitySummaryView(APIView):
                     "classification": inv.app_classification,
                     "category": categorize_domain_or_app(app_id),
                     "is_browser": is_browser,
+                    "first_used": start_iso,
+                    "last_used": end_iso,
+                    "session_count": 0,
+                    "sessions": [],
                     "tabs_dict": {},
                 }
+
             apps_dict[app_id]["total_seconds"] += inv.duration_seconds
+            if start_iso < apps_dict[app_id]["first_used"]:
+                apps_dict[app_id]["first_used"] = start_iso
+            if end_iso > apps_dict[app_id]["last_used"]:
+                apps_dict[app_id]["last_used"] = end_iso
+
             w_title = inv.window_title.strip() if inv.window_title else ""
+            app_sessions = apps_dict[app_id]["sessions"]
+            merged = False
+            if app_sessions:
+                prev_sess = app_sessions[-1]
+                prev_end = datetime.datetime.fromisoformat(prev_sess["end"])
+                gap = (inv.started_at - prev_end).total_seconds()
+                if 0 <= gap <= 60 and (not w_title or not prev_sess["window_title"] or prev_sess["window_title"] == w_title):
+                    prev_sess["end"] = end_iso
+                    prev_sess["duration_seconds"] = round(prev_sess["duration_seconds"] + inv.duration_seconds, 1)
+                    if w_title and not prev_sess["window_title"]:
+                        prev_sess["window_title"] = w_title
+                    merged = True
+
+            if not merged:
+                app_sessions.append({
+                    "start": start_iso,
+                    "end": end_iso,
+                    "duration_seconds": round(inv.duration_seconds, 1),
+                    "window_title": w_title,
+                })
+
             if w_title:
                 tabs = apps_dict[app_id]["tabs_dict"]
                 if w_title not in tabs:
@@ -757,6 +791,7 @@ class ProductivitySummaryView(APIView):
         for app_id, data in apps_dict.items():
             tot = data["total_seconds"]
             tabs_list = sorted(data["tabs_dict"].values(), key=lambda t: t["total_seconds"], reverse=True)
+            sess_list = sorted(data["sessions"], key=lambda s: s["start"])
             app_leaderboard.append({
                 "app_identifier": app_id,
                 "display_name": data["display_name"],
@@ -765,6 +800,10 @@ class ProductivitySummaryView(APIView):
                 "classification": data["classification"],
                 "category": data["category"],
                 "is_browser": data["is_browser"],
+                "first_used": sess_list[0]["start"] if sess_list else data["first_used"],
+                "last_used": sess_list[-1]["end"] if sess_list else data["last_used"],
+                "session_count": len(sess_list),
+                "sessions": sess_list,
                 "tabs": tabs_list,
             })
         app_leaderboard.sort(key=lambda a: a["total_seconds"], reverse=True)

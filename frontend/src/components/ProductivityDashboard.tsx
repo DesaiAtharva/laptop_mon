@@ -79,6 +79,28 @@ export const ProductivityDashboard: React.FC = () => {
     return `${s}s`;
   };
 
+  const formatTimeOnly = (isoStr?: string): string => {
+    if (!isoStr) return "—";
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatTimeWithSeconds = (isoStr?: string): string => {
+    if (!isoStr) return "—";
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return "—";
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    } catch {
+      return "—";
+    }
+  };
+
   const filteredApps = useMemo(() => {
     if (!data) return [];
     return data.app_leaderboard.filter((app: AppLeaderboardItem) => {
@@ -1245,9 +1267,10 @@ export const ProductivityDashboard: React.FC = () => {
                     <th style={{ padding: "10px" }}>Application / Process</th>
                     <th style={{ padding: "10px" }}>Category</th>
                     <th style={{ padding: "10px" }}>Duration</th>
+                    <th style={{ padding: "10px" }}>Active Timing Window</th>
                     <th style={{ padding: "10px" }}>% of Day</th>
                     <th style={{ padding: "10px" }}>Classification</th>
-                    <th style={{ padding: "10px", textAlign: "right" }}>Tabs / Windows</th>
+                    <th style={{ padding: "10px", textAlign: "right" }}>Timing &amp; Details</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1255,16 +1278,18 @@ export const ProductivityDashboard: React.FC = () => {
                     filteredApps.map((app) => {
                       const isExpanded = !!expandedApps[app.app_identifier];
                       const hasTabs = app.tabs && app.tabs.length > 0;
+                      const hasSessions = app.sessions && app.sessions.length > 0;
+                      const canExpand = hasTabs || hasSessions;
 
                       return (
                         <React.Fragment key={app.app_identifier}>
                           <tr
                             style={{
                               borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                              cursor: hasTabs ? "pointer" : "default",
+                              cursor: canExpand ? "pointer" : "default",
                               background: isExpanded ? "rgba(255, 255, 255, 0.02)" : "transparent",
                             }}
-                            onClick={() => hasTabs && toggleExpand(app.app_identifier)}
+                            onClick={() => canExpand && toggleExpand(app.app_identifier)}
                           >
                             <td style={{ padding: "12px 10px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1290,7 +1315,21 @@ export const ProductivityDashboard: React.FC = () => {
                               {formatSeconds(app.total_seconds)}
                             </td>
 
-                            <td style={{ padding: "12px 10px", width: "160px" }}>
+                            {/* App Wise Timing Window */}
+                            <td style={{ padding: "12px 10px" }}>
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "var(--accent-cyan)", fontFamily: "monospace" }}>
+                                  {app.first_used && app.last_used
+                                    ? `${formatTimeOnly(app.first_used)} – ${formatTimeOnly(app.last_used)}`
+                                    : "—"}
+                                </span>
+                                <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                                  {app.session_count || (app.sessions ? app.sessions.length : 1)} session{(app.session_count || 1) !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td style={{ padding: "12px 10px", width: "150px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                 <div
                                   style={{
@@ -1330,7 +1369,7 @@ export const ProductivityDashboard: React.FC = () => {
                             </td>
 
                             <td style={{ padding: "12px 10px", textAlign: "right" }}>
-                              {hasTabs ? (
+                              {canExpand ? (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1341,13 +1380,18 @@ export const ProductivityDashboard: React.FC = () => {
                                     color: isExpanded ? "#0a0e17" : "var(--text-main)",
                                     border: "1px solid var(--border-color)",
                                     borderRadius: "6px",
-                                    padding: "4px 10px",
+                                    padding: "5px 12px",
                                     fontSize: "0.78rem",
                                     fontWeight: 600,
                                     cursor: "pointer",
+                                    transition: "all 0.15s ease",
                                   }}
                                 >
-                                  {isExpanded ? `▲ Hide (${app.tabs.length})` : `▼ View Tabs (${app.tabs.length})`}
+                                  {isExpanded
+                                    ? "▲ Hide Timing"
+                                    : hasTabs
+                                    ? `▼ Timing & Tabs (${app.tabs.length})`
+                                    : `▼ View Timing (${app.sessions?.length || 1})`}
                                 </button>
                               ) : (
                                 <span style={{ fontSize: "0.78rem", color: "var(--text-subtle)" }}>—</span>
@@ -1355,73 +1399,237 @@ export const ProductivityDashboard: React.FC = () => {
                             </td>
                           </tr>
 
-                          {/* Expandable Tabs Sub-table */}
-                          {isExpanded && hasTabs && (
+                          {/* Expandable Session Timings & Tabs Breakdown */}
+                          {isExpanded && canExpand && (
                             <tr>
-                              <td colSpan={6} style={{ padding: "0 10px 14px 40px", background: "rgba(0, 0, 0, 0.2)" }}>
+                              <td colSpan={7} style={{ padding: "0 14px 18px 40px", background: "rgba(0, 0, 0, 0.25)" }}>
                                 <div
                                   style={{
-                                    borderLeft: "2px solid var(--accent-cyan)",
-                                    paddingLeft: "15px",
-                                    marginTop: "8px",
+                                    borderLeft: "3px solid var(--accent-cyan)",
+                                    paddingLeft: "16px",
+                                    marginTop: "12px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "16px",
                                   }}
                                 >
-                                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--accent-cyan)", marginBottom: "8px" }}>
-                                    Active Browser Tabs &amp; Pages in {app.display_name}:
+                                  {/* 1. 24-Hour App Focus Timeline Lane */}
+                                  <div>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--accent-cyan)" }}>
+                                        🕒 24-Hour Focus Lane for {app.display_name}
+                                      </span>
+                                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                                        Active Span: {formatTimeOnly(app.first_used)} – {formatTimeOnly(app.last_used)} • {app.sessions?.length || 1} session{(app.sessions?.length || 1) > 1 ? "s" : ""}
+                                      </span>
+                                    </div>
+
+                                    {/* Visual Gantt Bar across 24 hours */}
+                                    <div
+                                      style={{
+                                        position: "relative",
+                                        height: "26px",
+                                        background: "rgba(255, 255, 255, 0.04)",
+                                        borderRadius: "6px",
+                                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                                        overflow: "hidden",
+                                      }}
+                                    >
+                                      {app.sessions?.map((sess, sIdx) => {
+                                        const sDate = new Date(sess.start);
+                                        const eDate = new Date(sess.end);
+                                        const startM = sDate.getHours() * 60 + sDate.getMinutes() + sDate.getSeconds() / 60;
+                                        const endM = eDate.getHours() * 60 + eDate.getMinutes() + eDate.getSeconds() / 60;
+                                        const left = Math.max(0, Math.min(100, (startM / 1440) * 100));
+                                        const width = Math.max(0.6, Math.min(100 - left, ((Math.max(endM, startM + 1) - startM) / 1440) * 100));
+                                        return (
+                                          <div
+                                            key={sIdx}
+                                            title={`Session ${sIdx + 1}: ${formatTimeWithSeconds(sess.start)} – ${formatTimeWithSeconds(sess.end)} (${formatSeconds(sess.duration_seconds)})${sess.window_title ? ` | "${sess.window_title}"` : ""}`}
+                                            style={{
+                                              position: "absolute",
+                                              left: `${left}%`,
+                                              width: `${width}%`,
+                                              top: "3px",
+                                              bottom: "3px",
+                                              background:
+                                                app.classification === "productive"
+                                                  ? "#10b981"
+                                                  : app.classification === "distracting"
+                                                  ? "#ef4444"
+                                                  : "#06b6d4",
+                                              borderRadius: "3px",
+                                              opacity: 0.9,
+                                              cursor: "pointer",
+                                            }}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                    {/* 24-Hour Markers */}
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginTop: "4px",
+                                        fontSize: "0.7rem",
+                                        color: "var(--text-subtle)",
+                                        fontFamily: "monospace",
+                                      }}
+                                    >
+                                      <span>00:00</span>
+                                      <span>04:00</span>
+                                      <span>08:00</span>
+                                      <span>12:00</span>
+                                      <span>16:00</span>
+                                      <span>20:00</span>
+                                      <span>23:59</span>
+                                    </div>
                                   </div>
 
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                                    {app.tabs.map((tab, idx) => (
-                                      <div
-                                        key={idx}
-                                        style={{
-                                          display: "flex",
-                                          justifyContent: "space-between",
-                                          alignItems: "center",
-                                          background: "rgba(255, 255, 255, 0.03)",
-                                          padding: "8px 12px",
-                                          borderRadius: "6px",
-                                          border: "1px solid rgba(255, 255, 255, 0.04)",
-                                        }}
-                                      >
-                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", maxWidth: "70%" }}>
-                                          <span
+                                  {/* 2. Detailed Session Timings Table */}
+                                  <div>
+                                    <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "8px" }}>
+                                      ⏱️ Session Timings &amp; Focused Windows ({app.sessions?.length || 0} Sessions)
+                                    </div>
+                                    <div
+                                      style={{
+                                        maxHeight: "220px",
+                                        overflowY: "auto",
+                                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                                        borderRadius: "8px",
+                                        background: "rgba(0, 0, 0, 0.2)",
+                                      }}
+                                    >
+                                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                                        <thead>
+                                          <tr
                                             style={{
-                                              fontSize: "0.75rem",
-                                              padding: "2px 6px",
-                                              borderRadius: "4px",
-                                              background: "rgba(6, 182, 212, 0.15)",
-                                              color: "var(--accent-cyan)",
-                                              fontWeight: 600,
+                                              textAlign: "left",
+                                              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                                              color: "var(--text-muted)",
+                                              background: "rgba(255, 255, 255, 0.02)",
                                             }}
                                           >
-                                            {tab.domain}
-                                          </span>
-                                          <span
-                                            style={{
-                                              fontSize: "0.84rem",
-                                              color: "var(--text-main)",
-                                              whiteSpace: "nowrap",
-                                              overflow: "hidden",
-                                              textOverflow: "ellipsis",
-                                            }}
-                                            title={tab.tab_title}
-                                          >
-                                            {tab.tab_title}
-                                          </span>
-                                        </div>
+                                            <th style={{ padding: "8px 12px", width: "70px" }}>Session</th>
+                                            <th style={{ padding: "8px 12px", width: "200px" }}>Start – End Time</th>
+                                            <th style={{ padding: "8px 12px", width: "110px" }}>Duration</th>
+                                            <th style={{ padding: "8px 12px" }}>Active Window / Document</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {app.sessions && app.sessions.length > 0 ? (
+                                            app.sessions.map((sess, sIdx) => (
+                                              <tr key={sIdx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                                <td style={{ padding: "8px 12px", color: "var(--text-muted)", fontWeight: 600 }}>
+                                                  #{sIdx + 1}
+                                                </td>
+                                                <td
+                                                  style={{
+                                                    padding: "8px 12px",
+                                                    color: "var(--accent-cyan)",
+                                                    fontFamily: "monospace",
+                                                    fontSize: "0.78rem",
+                                                  }}
+                                                >
+                                                  {formatTimeWithSeconds(sess.start)} – {formatTimeWithSeconds(sess.end)}
+                                                </td>
+                                                <td style={{ padding: "8px 12px", fontWeight: 700, color: "var(--accent-emerald)" }}>
+                                                  {formatSeconds(sess.duration_seconds)}
+                                                </td>
+                                                <td
+                                                  style={{
+                                                    padding: "8px 12px",
+                                                    color: "var(--text-main)",
+                                                    maxWidth: "400px",
+                                                    overflow: "hidden",
+                                                    textOverflow: "ellipsis",
+                                                    whiteSpace: "nowrap",
+                                                  }}
+                                                  title={sess.window_title}
+                                                >
+                                                  {sess.window_title ? (
+                                                    `"${sess.window_title}"`
+                                                  ) : (
+                                                    <span style={{ color: "var(--text-subtle)", fontStyle: "italic" }}>
+                                                      Default window focus
+                                                    </span>
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            ))
+                                          ) : (
+                                            <tr>
+                                              <td colSpan={4} style={{ padding: "12px", textAlign: "center", color: "var(--text-muted)" }}>
+                                                No discrete sessions recorded.
+                                              </td>
+                                            </tr>
+                                          )}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
 
-                                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                                          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                                            {tab.category}
-                                          </span>
-                                          <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--accent-emerald)" }}>
-                                            {formatSeconds(tab.total_seconds)}
-                                          </span>
-                                        </div>
+                                  {/* 3. In-Browser Tabs & Pages (if applicable) */}
+                                  {hasTabs && (
+                                    <div>
+                                      <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--accent-cyan)", marginBottom: "8px" }}>
+                                        🌐 Active Browser Tabs &amp; Pages ({app.tabs.length})
                                       </div>
-                                    ))}
-                                  </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                        {app.tabs.map((tab, idx) => (
+                                          <div
+                                            key={idx}
+                                            style={{
+                                              display: "flex",
+                                              justifyContent: "space-between",
+                                              alignItems: "center",
+                                              background: "rgba(255, 255, 255, 0.03)",
+                                              padding: "8px 12px",
+                                              borderRadius: "6px",
+                                              border: "1px solid rgba(255, 255, 255, 0.04)",
+                                            }}
+                                          >
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", maxWidth: "70%" }}>
+                                              <span
+                                                style={{
+                                                  fontSize: "0.75rem",
+                                                  padding: "2px 6px",
+                                                  borderRadius: "4px",
+                                                  background: "rgba(6, 182, 212, 0.15)",
+                                                  color: "var(--accent-cyan)",
+                                                  fontWeight: 600,
+                                                }}
+                                              >
+                                                {tab.domain}
+                                              </span>
+                                              <span
+                                                style={{
+                                                  fontSize: "0.84rem",
+                                                  color: "var(--text-main)",
+                                                  whiteSpace: "nowrap",
+                                                  overflow: "hidden",
+                                                  textOverflow: "ellipsis",
+                                                }}
+                                                title={tab.tab_title}
+                                              >
+                                                {tab.tab_title}
+                                              </span>
+                                            </div>
+
+                                            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                                              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                                                {tab.category}
+                                              </span>
+                                              <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--accent-emerald)" }}>
+                                                {formatSeconds(tab.total_seconds)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -1431,7 +1639,7 @@ export const ProductivityDashboard: React.FC = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                      <td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
                         No applications matched your search query.
                       </td>
                     </tr>

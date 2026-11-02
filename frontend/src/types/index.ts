@@ -105,6 +105,13 @@ export interface BrowserTabUsage {
   total_seconds: number;
 }
 
+export interface AppSessionTiming {
+  start: string;
+  end: string;
+  duration_seconds: number;
+  window_title: string;
+}
+
 export interface AppLeaderboardItem {
   app_identifier: string;
   display_name: string;
@@ -113,6 +120,10 @@ export interface AppLeaderboardItem {
   classification: "productive" | "neutral" | "distracting" | "excluded";
   category: string;
   is_browser: boolean;
+  first_used?: string;
+  last_used?: string;
+  session_count?: number;
+  sessions?: AppSessionTiming[];
   tabs: BrowserTabUsage[];
 }
 
