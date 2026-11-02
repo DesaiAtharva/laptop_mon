@@ -10,7 +10,7 @@ urlpatterns = [
     path("api/", include("apps.devices.urls")),
     path("api/", include("apps.policies.urls")),
     path("api/", include("apps.ingestion.urls")),
-    path("api/audit-logs/", include("apps.audit.urls")),
+    path("api/", include("apps.audit.urls")),
     path("api/support-access/", include("apps.support_access.urls")),
     path("api/", include("apps.screenshots.urls")),
     path("api/", include("apps.analytics.urls")),

@@ -153,7 +153,10 @@ export const api = {
   // ── Team Reports (REQ-2-3) ────────────────────────────────────────────────
   async getDailyReports(): Promise<{ results: DailyMetrics[] }> {
     try {
-      return await request<{ results: DailyMetrics[] }>("/reports/daily");
+      const resp = await request<any>("/reports/daily");
+      if (resp && Array.isArray(resp.results)) return { results: resp.results };
+      if (Array.isArray(resp)) return { results: resp };
+      return { results: [] };
     } catch {
       return {
         results: [
@@ -199,7 +202,10 @@ export const api = {
   // ── Disputes (E89) ────────────────────────────────────────────────────────
   async getDisputes(): Promise<DisputeItem[]> {
     try {
-      return await request<DisputeItem[]>("/disputes");
+      const resp = await request<any>("/disputes");
+      if (Array.isArray(resp)) return resp;
+      if (resp && Array.isArray(resp.results)) return resp.results;
+      return [];
     } catch {
       return [
         {
@@ -280,7 +286,10 @@ export const api = {
   // ── Screenshots Gallery (E69) ─────────────────────────────────────────────
   async getScreenshots(): Promise<{ results: ScreenshotItem[] }> {
     try {
-      return await request<{ results: ScreenshotItem[] }>("/screenshots?page_size=1000");
+      const resp = await request<any>("/screenshots?page_size=1000");
+      if (resp && Array.isArray(resp.results)) return { results: resp.results };
+      if (Array.isArray(resp)) return { results: resp };
+      return { results: [] };
     } catch {
       return {
         results: [
@@ -373,7 +382,10 @@ export const api = {
   // ── Audit Logs ────────────────────────────────────────────────────────────
   async getAuditLogs(): Promise<AuditLogItem[]> {
     try {
-      return await request<AuditLogItem[]>("/audit-logs");
+      const resp = await request<any>("/audit-logs");
+      if (Array.isArray(resp)) return resp;
+      if (resp && Array.isArray(resp.results)) return resp.results;
+      return [];
     } catch {
       return [
         {

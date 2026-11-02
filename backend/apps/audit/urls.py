@@ -1,7 +1,8 @@
 """Audit log URLs."""
-from django.urls import path
+from django.urls import path, re_path
 from apps.audit.views import AuditLogListView
 
 urlpatterns = [
-    path("", AuditLogListView.as_view(), name="audit-log-list"),
+    re_path(r"^audit-logs/?$", AuditLogListView.as_view(), name="audit-log-list"),
 ]
+
