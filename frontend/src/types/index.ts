@@ -135,6 +135,28 @@ export interface ProductivityTimelineInterval {
   classification: string;
 }
 
+export interface ProductivityDeviceItem {
+  id: string;
+  hostname: string;
+  os: string;
+  status: string;
+  last_seen_at: string | null;
+  total_days?: number;
+  total_active_seconds?: number;
+  avg_productive_share?: number;
+  total_screenshots?: number;
+}
+
+export interface ProductivityDaySummary {
+  date: string;
+  active_seconds: number;
+  idle_seconds: number;
+  productive_seconds: number;
+  productive_share: number;
+  monitoring_coverage?: number;
+  total_screenshots?: number;
+}
+
 export interface ProductivitySummaryData {
   device_id: string | null;
   device_name: string | null;
@@ -153,13 +175,8 @@ export interface ProductivitySummaryData {
   hourly_activity: HourlyActivityItem[];
   app_leaderboard: AppLeaderboardItem[];
   timeline_intervals: ProductivityTimelineInterval[];
-  available_devices: {
-    id: string;
-    hostname: string;
-    os: string;
-    status: string;
-    last_seen_at: string | null;
-  }[];
+  available_devices: ProductivityDeviceItem[];
+  device_days?: ProductivityDaySummary[];
 }
 
 export type DisputeStatus = "open" | "under_review" | "resolved" | "rejected";

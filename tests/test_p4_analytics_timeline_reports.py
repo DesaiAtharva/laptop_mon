@@ -581,7 +581,8 @@ class P4AnalyticsTimelineReportsTests(TestCase):
 
     def test_E74_late_event_recalculates_affected_window(self) -> None:
         """E74: Late arriving event recalculates affected device and time window with safety overlap."""
-        base_time = timezone.now() - datetime.timedelta(hours=5)
+        # Anchor to 10:00 AM to ensure 1-hour interval stays within the same day regardless of test execution hour
+        base_time = timezone.now().replace(hour=10, minute=0, second=0, microsecond=0) - datetime.timedelta(days=1)
         ActivityEvent.objects.create(
             tenant=self.tenant_a, device=self.device_a,
             event_type="session.start", occurred_at=base_time, payload={"source_sequence": 1}

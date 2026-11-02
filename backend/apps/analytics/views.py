@@ -9,7 +9,8 @@ import uuid
 from typing import Any
 
 from django.conf import settings
-from django.db.models import Sum
+from django.db import models
+from django.db.models import Avg, Count, Sum
 from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import permissions, status
 from rest_framework.pagination import PageNumberPagination
@@ -602,6 +603,20 @@ class ProductivitySummaryView(APIView):
         else:
             target_device = device_qs.order_by("-last_seen_at").first()
 
+        # Gather aggregate metrics per device for Level 1 Fleet Overview
+        from apps.screenshots.models import Screenshot
+        device_metrics_qs = DailyMetrics.objects.filter(device__in=device_qs).values("device_id").annotate(
+            total_days=models.Count("local_date", distinct=True),
+            total_active_sec=models.Sum("active_seconds"),
+            avg_prod_share=models.Avg("productive_share"),
+        )
+        metrics_by_dev = {str(m["device_id"]): m for m in device_metrics_qs}
+
+        sc_counts_qs = Screenshot.objects.filter(device__in=device_qs).values("device_id").annotate(
+            total_sc=models.Count("id")
+        )
+        sc_by_dev = {str(s["device_id"]): s["total_sc"] for s in sc_counts_qs}
+
         available_devices = [
             {
                 "id": str(d.id),
@@ -609,6 +624,10 @@ class ProductivitySummaryView(APIView):
                 "os": d.os,
                 "status": d.status,
                 "last_seen_at": d.last_seen_at.isoformat() if d.last_seen_at else None,
+                "total_days": metrics_by_dev.get(str(d.id), {}).get("total_days", 0),
+                "total_active_seconds": round(metrics_by_dev.get(str(d.id), {}).get("total_active_sec") or 0.0, 1),
+                "avg_productive_share": round(metrics_by_dev.get(str(d.id), {}).get("avg_prod_share") or 0.0, 1),
+                "total_screenshots": sc_by_dev.get(str(d.id), 0),
             }
             for d in device_qs.order_by("hostname")
         ]
@@ -627,6 +646,7 @@ class ProductivitySummaryView(APIView):
                 "app_leaderboard": [],
                 "timeline_intervals": [],
                 "available_devices": available_devices,
+                "device_days": [],
             })
 
         date_str = request.query_params.get("date")
@@ -764,6 +784,55 @@ class ProductivitySummaryView(APIView):
             for inv in intervals
         ]
 
+        # Level 2: Gather all calendar days with activity for target_device
+        target_daily_metrics = DailyMetrics.objects.filter(device=target_device).order_by("-local_date")
+        target_days_dict: dict[str, Any] = {}
+        for dm in target_daily_metrics:
+            target_days_dict[str(dm.local_date)] = {
+                "date": str(dm.local_date),
+                "active_seconds": round(dm.active_seconds, 1),
+                "idle_seconds": round(dm.idle_seconds, 1),
+                "productive_seconds": round(dm.productive_seconds, 1),
+                "productive_share": round(dm.productive_share, 1),
+                "monitoring_coverage": round(dm.monitoring_coverage, 1),
+                "total_screenshots": 0,
+            }
+
+        # Include target_date dynamically
+        if str(target_date) not in target_days_dict:
+            target_days_dict[str(target_date)] = {
+                "date": str(target_date),
+                "active_seconds": round(active_sec, 1),
+                "idle_seconds": round(idle_sec, 1),
+                "productive_seconds": round(prod_sec, 1),
+                "productive_share": prod_share,
+                "monitoring_coverage": 100.0,
+                "total_screenshots": screenshot_count,
+            }
+        else:
+            target_days_dict[str(target_date)]["total_screenshots"] = screenshot_count
+
+        # Get screenshot counts per day for target_device
+        target_sc_days = Screenshot.objects.filter(device=target_device).values("captured_at__date").annotate(
+            count=models.Count("id")
+        )
+        for sc_day in target_sc_days:
+            d_str = str(sc_day["captured_at__date"])
+            if d_str in target_days_dict:
+                target_days_dict[d_str]["total_screenshots"] = sc_day["count"]
+            else:
+                target_days_dict[d_str] = {
+                    "date": d_str,
+                    "active_seconds": 0.0,
+                    "idle_seconds": 0.0,
+                    "productive_seconds": 0.0,
+                    "productive_share": 0.0,
+                    "monitoring_coverage": 0.0,
+                    "total_screenshots": sc_day["count"],
+                }
+
+        device_days = sorted(target_days_dict.values(), key=lambda x: str(x["date"]), reverse=True)
+
         return Response({
             "device_id": str(target_device.id),
             "device_name": target_device.hostname,
@@ -783,4 +852,5 @@ class ProductivitySummaryView(APIView):
             "app_leaderboard": app_leaderboard,
             "timeline_intervals": timeline_serialized,
             "available_devices": available_devices,
+            "device_days": device_days,
         })
