@@ -25,6 +25,8 @@ def enroll_device(
     os_name: str,
     agent_version: str,
     hardware_id: str = "",
+    employee_id: str = "",
+    employee_name: str = "",
 ) -> Tuple[Device, str, MonitoringPolicy]:
     """Exchanges a single-use enrollment token for per-device credentials (§8.3, E39).
 
@@ -66,6 +68,8 @@ def enroll_device(
         os=os_name,
         agent_version=agent_version,
         hardware_id=hardware_id,
+        employee_id=employee_id.strip(),
+        employee_name=employee_name.strip(),
         status=DeviceStatus.ACTIVE,
         last_seen_at=timezone.now(),
     )

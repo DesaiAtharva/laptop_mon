@@ -150,6 +150,8 @@ export interface ProductivityDeviceItem {
   id: string;
   hostname: string;
   os: string;
+  employee_id?: string;
+  employee_name?: string;
   status: string;
   last_seen_at: string | null;
   total_days?: number;
@@ -171,6 +173,8 @@ export interface ProductivityDaySummary {
 export interface ProductivitySummaryData {
   device_id: string | null;
   device_name: string | null;
+  employee_id?: string;
+  employee_name?: string;
   os?: string;
   date: string;
   summary: {

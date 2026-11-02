@@ -41,6 +41,8 @@ class Device(TenantModel):
     )
     agent_version = models.CharField(max_length=64, default="", blank=True)
     hardware_id = models.CharField(max_length=255, blank=True, db_index=True)
+    employee_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    employee_name = models.CharField(max_length=255, blank=True, default="")
     last_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
@@ -49,6 +51,7 @@ class Device(TenantModel):
         indexes = [
             models.Index(fields=["tenant", "status"]),
             models.Index(fields=["tenant", "hostname"]),
+            models.Index(fields=["tenant", "employee_id"]),
         ]
 
     def __str__(self) -> str:

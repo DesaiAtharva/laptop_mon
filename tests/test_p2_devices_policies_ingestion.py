@@ -232,6 +232,45 @@ class P2DevicesPoliciesIngestionTests(TestCase):
         new_device = Device.objects.get(id=new_device_id)
         self.assertEqual(new_device.status, DeviceStatus.ACTIVE)
 
+    def test_enrollment_with_employee_and_student_id(self) -> None:
+        """Agent enrollment captures and stores Employee/Student ID and Name."""
+        admin_client = self._auth_user_client(self.admin_user_a, self.tenant_a)
+        token_resp = admin_client.post(
+            "/api/devices/enrollment-tokens",
+            data={"expires_hours": 24, "max_uses": 1},
+            format="json",
+        )
+        self.assertEqual(token_resp.status_code, status.HTTP_201_CREATED)
+        raw_token = token_resp.json()["enrollment_token"]
+
+        # Test installer download endpoint
+        dl_resp = admin_client.get(f"/api/devices/installer/download?token={raw_token}&os=windows")
+        self.assertEqual(dl_resp.status_code, status.HTTP_200_OK)
+        self.assertIn("application/x-bat", dl_resp["Content-Type"])
+        self.assertIn(raw_token, dl_resp.content.decode("utf-8"))
+
+        # Enroll agent with employee ID and name
+        client = APIClient()
+        enroll_resp = client.post(
+            "/api/agent/enroll",
+            data={
+                "token": raw_token,
+                "hostname": "STUDENT-LAPTOP-01",
+                "os": "windows",
+                "agent_version": "1.0.0",
+                "employee_id": "STU-8842",
+                "employee_name": "Atharva Desai",
+            },
+            format="json",
+        )
+        self.assertEqual(enroll_resp.status_code, status.HTTP_201_CREATED)
+        device_id = enroll_resp.json()["device_id"]
+
+        device = Device.objects.get(id=device_id)
+        self.assertEqual(device.employee_id, "STU-8842")
+        self.assertEqual(device.employee_name, "Atharva Desai")
+        self.assertEqual(device.tenant, self.tenant_a)
+
     # ── Edge Case E24 & E38: Device revoked online / offline ──────────────────
     def test_E24_device_revoked_remotely_while_online(self) -> None:
         """Revoking a device immediately causes server-side rejection (403 Forbidden)."""

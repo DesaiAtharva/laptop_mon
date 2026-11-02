@@ -423,7 +423,16 @@ export const ProductivityDashboard: React.FC = () => {
                               <div style={{ fontWeight: 700, color: "var(--text-main)", fontSize: "0.95rem" }}>
                                 {dev.hostname}
                               </div>
-                              <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)", fontFamily: "monospace" }}>
+                              <div style={{ fontSize: "0.8rem", color: dev.employee_id || dev.employee_name ? "var(--accent-cyan)" : "var(--text-subtle)", fontWeight: 600, marginTop: "2px" }}>
+                                {dev.employee_name || dev.employee_id ? (
+                                  <>
+                                    👤 {dev.employee_name || "Employee"} {dev.employee_id ? `(${dev.employee_id})` : ""}
+                                  </>
+                                ) : (
+                                  <span style={{ fontStyle: "italic", opacity: 0.7 }}>Unassigned Employee</span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: "0.72rem", color: "var(--text-subtle)", fontFamily: "monospace" }}>
                                 {dev.id}
                               </div>
                             </div>
@@ -554,6 +563,11 @@ export const ProductivityDashboard: React.FC = () => {
               <div>
                 <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-main)" }}>
                   {selectedDevice.hostname}
+                  {(selectedDevice.employee_name || selectedDevice.employee_id) && (
+                    <span style={{ marginLeft: "10px", fontSize: "0.95rem", color: "var(--accent-cyan)", fontWeight: 600 }}>
+                      • 👤 {selectedDevice.employee_name || "Employee"} ({selectedDevice.employee_id || "No ID"})
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontFamily: "monospace" }}>
                   Device ID: {selectedDevice.id} • OS: {selectedDevice.os}
@@ -737,6 +751,55 @@ export const ProductivityDashboard: React.FC = () => {
       ═══════════════════════════════════════════════════════════════════════ */}
       {viewLevel === "detail" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          {/* Selected Device & Employee Banner */}
+          <div
+            style={{
+              background: "rgba(6, 182, 212, 0.05)",
+              border: "1px solid rgba(6, 182, 212, 0.2)",
+              borderRadius: "10px",
+              padding: "12px 18px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "10px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "1.6rem" }}>💻</span>
+              <div>
+                <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-main)" }}>
+                  {selectedDevice?.hostname || data?.device_name}
+                  {(selectedDevice?.employee_name || data?.employee_name || selectedDevice?.employee_id || data?.employee_id) && (
+                    <span style={{ marginLeft: "10px", fontSize: "0.92rem", color: "var(--accent-cyan)", fontWeight: 600 }}>
+                      • 👤 {selectedDevice?.employee_name || data?.employee_name || "Employee"} ({selectedDevice?.employee_id || data?.employee_id || "No ID"})
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontFamily: "monospace" }}>
+                  Device ID: {selectedDevice?.id || data?.device_id} • OS: {selectedDevice?.os || data?.os}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setViewLevel("days")}
+              style={{
+                background: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid var(--border-color)",
+                color: "var(--text-main)",
+                padding: "6px 14px",
+                borderRadius: "6px",
+                fontSize: "0.82rem",
+                cursor: "pointer",
+                fontWeight: 600,
+                transition: "all 0.15s ease",
+              }}
+            >
+              ← Back to Calendar
+            </button>
+          </div>
+
           {/* Quick Date Bar */}
           <div
             style={{

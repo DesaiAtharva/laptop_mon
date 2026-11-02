@@ -622,6 +622,8 @@ class ProductivitySummaryView(APIView):
                 "id": str(d.id),
                 "hostname": d.hostname,
                 "os": d.os,
+                "employee_id": d.employee_id,
+                "employee_name": d.employee_name,
                 "status": d.status,
                 "last_seen_at": d.last_seen_at.isoformat() if d.last_seen_at else None,
                 "total_days": metrics_by_dev.get(str(d.id), {}).get("total_days", 0),
@@ -875,6 +877,8 @@ class ProductivitySummaryView(APIView):
         return Response({
             "device_id": str(target_device.id),
             "device_name": target_device.hostname,
+            "employee_id": target_device.employee_id,
+            "employee_name": target_device.employee_name,
             "os": target_device.os,
             "date": str(target_date),
             "summary": {

@@ -15,6 +15,8 @@ class DeviceSerializer(serializers.ModelSerializer):
             "membership_email",
             "hostname",
             "os",
+            "employee_id",
+            "employee_name",
             "status",
             "agent_version",
             "hardware_id",
@@ -37,6 +39,8 @@ class AgentEnrollSerializer(serializers.Serializer):
     os = serializers.CharField(required=True, max_length=64)
     agent_version = serializers.CharField(required=True, max_length=64)
     hardware_id = serializers.CharField(required=False, allow_blank=True, default="")
+    employee_id = serializers.CharField(required=False, allow_blank=True, default="", max_length=64)
+    employee_name = serializers.CharField(required=False, allow_blank=True, default="", max_length=255)
 
 
 class DeviceReassignSerializer(serializers.Serializer):

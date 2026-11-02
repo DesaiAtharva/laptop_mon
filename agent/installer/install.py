@@ -33,6 +33,10 @@ def parse_arguments(argv: Optional[list[str]] = None) -> argparse.Namespace:
             normalized_args.append(f"--server={arg.split('=', 1)[1]}")
         elif upper_arg.startswith("/TARGET_DIR="):
             normalized_args.append(f"--target-dir={arg.split('=', 1)[1]}")
+        elif upper_arg.startswith("/EMPLOYEE_ID="):
+            normalized_args.append(f"--employee-id={arg.split('=', 1)[1]}")
+        elif upper_arg.startswith("/EMPLOYEE_NAME="):
+            normalized_args.append(f"--employee-name={arg.split('=', 1)[1]}")
         elif upper_arg == "/QUIET":
             normalized_args.append("--quiet")
         elif upper_arg == "/NO_STARTUP":
@@ -44,6 +48,8 @@ def parse_arguments(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--token", required=False, help="Agent enrollment token")
     parser.add_argument("--server", required=False, default="http://localhost:8000", help="Backend API server URL")
     parser.add_argument("--target-dir", required=False, help="Target installation directory")
+    parser.add_argument("--employee-id", required=False, default="", help="Employee or Student ID")
+    parser.add_argument("--employee-name", required=False, default="", help="Employee or Student Full Name")
     parser.add_argument("--quiet", action="store_true", help="Silent installation with no interactive UI")
     parser.add_argument("--no-startup", action="store_true", help="Do not register in Windows startup/Run registry")
 
@@ -70,6 +76,8 @@ def install(
     target_dir: Optional[str | Path] = None,
     token: Optional[str] = None,
     server: str = "http://localhost:8000",
+    employee_id: str = "",
+    employee_name: str = "",
     quiet: bool = False,
     register_startup: bool = True,
 ) -> Dict[str, Any]:
@@ -89,12 +97,48 @@ def install(
     data_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    # 2. Write configuration
+    # 2. Perform live token enrollment if provided
+    device_id = ""
+    device_secret = ""
+    if token:
+        try:
+            import socket
+            import urllib.request
+            enroll_url = f"{server.rstrip('/')}/api/agent/enroll"
+            payload = json.dumps({
+                "token": token,
+                "hostname": socket.gethostname(),
+                "os": sys.platform,
+                "agent_version": "1.0.0",
+                "employee_id": employee_id or "",
+                "employee_name": employee_name or "",
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                enroll_url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                if resp.status in (200, 201):
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    device_id = res_data.get("device_id", "")
+                    device_secret = res_data.get("device_secret", "")
+                    if not quiet:
+                        print(f"Device successfully enrolled! Device ID: {device_id}")
+        except Exception as exc:
+            logger.warning("Could not complete automatic enrollment during installation: %s", exc)
+
+    # 3. Write configuration
     config_path = install_path / "config.json"
     config_data = {
         "version": "1.0.0",
         "server_url": server.rstrip("/"),
         "enrollment_token": token or "",
+        "device_id": device_id,
+        "device_secret": device_secret,
+        "employee_id": employee_id,
+        "employee_name": employee_name,
         "data_dir": str(data_dir),
         "logs_dir": str(logs_dir),
         "installed_at": "now",
@@ -103,7 +147,7 @@ def install(
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config_data, f, indent=2)
 
-    # 3. Startup registration
+    # 4. Startup registration
     startup_registered = False
     agent_exe = bin_dir / ("agent.exe" if sys.platform == "win32" else "agent")
     if register_startup and sys.platform == "win32":
@@ -131,6 +175,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         target_dir=args.target_dir,
         token=args.token,
         server=args.server,
+        employee_id=args.employee_id,
+        employee_name=args.employee_name,
         quiet=args.quiet,
         register_startup=not args.no_startup,
     )

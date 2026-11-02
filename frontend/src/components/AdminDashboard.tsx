@@ -20,6 +20,7 @@ export const AdminDashboard: React.FC = () => {
   const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null);
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
   const [copiedCommand, setCopiedCommand] = useState(false);
+  const [showManualCommands, setShowManualCommands] = useState(false);
 
   const serverUrl = typeof window !== "undefined" ? window.location.origin : "https://monitor.saptasuryasolar.com";
 
@@ -191,18 +192,30 @@ export const AdminDashboard: React.FC = () => {
           <div
             style={{
               marginTop: "1.5rem",
-              padding: "1.25rem",
+              padding: "1.4rem",
               background: "rgba(56, 189, 248, 0.08)",
               border: "1px solid var(--accent-cyan)",
               borderRadius: "var(--radius-md)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            {/* Active Token Bar */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+                paddingBottom: "1rem",
+                borderBottom: "1px solid rgba(56, 189, 248, 0.2)",
+                marginBottom: "1.2rem",
+              }}
+            >
               <div>
                 <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--accent-cyan)", fontWeight: 700 }}>
-                  Active Single-Use Token:
+                  Active Enrollment Token:
                 </span>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "1rem", fontWeight: 700, marginLeft: "8px", color: "#ffffff" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.95rem", fontWeight: 700, marginLeft: "8px", color: "#ffffff" }}>
                   {enrollmentToken}
                 </span>
               </div>
@@ -211,66 +224,160 @@ export const AdminDashboard: React.FC = () => {
               </span>
             </div>
 
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>
-              Step 1: Run on Employee Windows Laptop (PowerShell):
-            </div>
-            <div
-              style={{
-                display: "flex",
-                background: "rgba(0, 0, 0, 0.5)",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.85rem",
-                color: "var(--accent-cyan)",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "12px",
-              }}
-            >
-              <code style={{ overflowX: "auto" }}>{windowsCommand}</code>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: "0.75rem", padding: "4px 8px", marginLeft: "12px", flexShrink: 0 }}
-                onClick={() => copyToClipboard(windowsCommand)}
-              >
-                {copiedCommand ? "✓ Copied" : "Copy Command"}
-              </button>
+            {/* Direct One-Click Download Options */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "4px" }}>
+                Option 1: One-Click Installer Files (No Terminal / Commands Needed)
+              </div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: "12px" }}>
+                Send this installer to your employee or student. When double-clicked, a native Setup Wizard opens on their laptop, collects their <strong>Employee/Student ID</strong> and <strong>Full Name</strong>, grants permissions, and enrolls automatically.
+              </div>
+
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <a
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=windows`}
+                  download="Install-LaptopMon.bat"
+                  className="btn btn-primary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>🪟</span>
+                  <span>Download Windows One-Click Installer (.bat)</span>
+                </a>
+
+                <a
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=linux`}
+                  download="install-laptopmon.sh"
+                  className="btn btn-secondary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>🍎 / 🐧</span>
+                  <span>Download macOS / Linux Script (.sh)</span>
+                </a>
+              </div>
             </div>
 
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "8px" }}>
-              Step 2: For macOS / Linux:
-            </div>
+            {/* Step-by-Step Onboarding Explanation */}
             <div
               style={{
-                display: "flex",
-                background: "rgba(0, 0, 0, 0.5)",
-                padding: "10px 14px",
+                background: "rgba(0, 0, 0, 0.3)",
+                padding: "14px 16px",
                 borderRadius: "8px",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.85rem",
-                color: "var(--accent-cyan)",
-                alignItems: "center",
-                justifyContent: "space-between",
+                border: "1px solid rgba(255, 255, 255, 0.05)",
+                marginBottom: "1.2rem",
               }}
             >
-              <code style={{ overflowX: "auto" }}>{macLinuxCommand}</code>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: "0.75rem", padding: "4px 8px", marginLeft: "12px", flexShrink: 0 }}
-                onClick={() => copyToClipboard(macLinuxCommand)}
-              >
-                Copy Command
-              </button>
+              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--accent-cyan)", marginBottom: "8px" }}>
+                📋 How Employee / Student Enrollment Works:
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  <strong style={{ color: "var(--text-main)" }}>1. Run Installer:</strong> Employee double-clicks the downloaded setup file on their laptop.
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  <strong style={{ color: "var(--text-main)" }}>2. Enter ID &amp; Name:</strong> Setup wizard prompts for their <em>Employee/Student ID</em> and <em>Full Name</em>.
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  <strong style={{ color: "var(--text-main)" }}>3. Grant Consent:</strong> Discloses transparent monitoring notice. Employee clicks "Grant Permissions &amp; Start".
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                  <strong style={{ color: "var(--text-main)" }}>4. Live in Dashboard:</strong> Laptop immediately appears in this dashboard tagged with that Employee/Student ID!
+                </div>
+              </div>
             </div>
 
-            <div style={{ marginTop: "1rem", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              ℹ️ Once executed on the employee's machine, the agent automatically registers, binds to your organization (Saptasurya Solar), and starts sending live productivity journals to this dashboard.
+            {/* Toggleable Advanced Terminal Commands */}
+            <div>
+              <button
+                onClick={() => setShowManualCommands(!showManualCommands)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--accent-cyan)",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                  textDecoration: "underline",
+                }}
+              >
+                {showManualCommands ? "▲ Hide manual terminal commands" : "▼ Option 2: Advanced manual terminal / silent MDM commands"}
+              </button>
+
+              {showManualCommands && (
+                <div style={{ marginTop: "12px" }}>
+                  <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "6px" }}>
+                    Run on Employee Windows Laptop (PowerShell / Command Prompt):
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      background: "rgba(0, 0, 0, 0.5)",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.82rem",
+                      color: "var(--accent-cyan)",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <code style={{ overflowX: "auto" }}>{windowsCommand}</code>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: "0.75rem", padding: "4px 8px", marginLeft: "12px", flexShrink: 0 }}
+                      onClick={() => copyToClipboard(windowsCommand)}
+                    >
+                      {copiedCommand ? "✓ Copied" : "Copy Command"}
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-main)", marginBottom: "6px" }}>
+                    For macOS / Linux:
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      background: "rgba(0, 0, 0, 0.5)",
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.82rem",
+                      color: "var(--accent-cyan)",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <code style={{ overflowX: "auto" }}>{macLinuxCommand}</code>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ fontSize: "0.75rem", padding: "4px 8px", marginLeft: "12px", flexShrink: 0 }}
+                      onClick={() => copyToClipboard(macLinuxCommand)}
+                    >
+                      Copy Command
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
           <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-            Click <strong>Generate New Enrollment Token</strong> above to generate a secure enrollment command to give to an employee or deploy via MDM / Active Directory.
+            Click <strong>Generate New Enrollment Token</strong> above to download the one-click installer or generate enrollment commands.
           </div>
         )}
       </div>

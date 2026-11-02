@@ -108,6 +108,8 @@ class AgentEnrollView(APIView):
             os_name=data["os"],
             agent_version=data["agent_version"],
             hardware_id=data.get("hardware_id", ""),
+            employee_id=data.get("employee_id", ""),
+            employee_name=data.get("employee_name", ""),
         )
 
         return Response(
@@ -160,3 +162,74 @@ class ReassignDeviceView(APIView):
 
         device.reassign(new_membership=membership, actor=request.user)
         return Response(DeviceSerializer(device).data, status=status.HTTP_200_OK)
+
+
+class DownloadInstallerScriptView(APIView):
+    """Admin/Agent endpoint to download a pre-configured one-click installer script."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request: Request) -> Any:
+        from django.http import HttpResponse
+
+        token = request.query_params.get("token", "").strip()
+        target_os = request.query_params.get("os", "windows").lower()
+        server_url = request.build_absolute_uri("/").rstrip("/")
+
+        if target_os == "windows":
+            script = f"""@echo off
+setlocal enabledelayedexpansion
+title Laptop Productivity Monitoring - Setup
+
+echo ==========================================================
+echo   Laptop Productivity Monitoring - Setup Wizard
+echo ==========================================================
+echo.
+echo Connecting to organization server: {server_url}
+echo.
+
+:: Detect Python
+set PY_CMD=
+python --version >nul 2>&1
+if !errorlevel! equ 0 set PY_CMD=python
+if "!PY_CMD!"=="" (
+    python3 --version >nul 2>&1
+    if !errorlevel! equ 0 set PY_CMD=python3
+)
+
+if "!PY_CMD!"=="" (
+    echo [NOTICE] Python is not installed. Attempting automatic installation via Windows Package Manager...
+    winget install Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+    set PY_CMD=python
+)
+
+:: Download and run GUI setup wizard
+set SETUP_DIR=%LOCALAPPDATA%\\LaptopMonSetup
+if not exist "%SETUP_DIR%" mkdir "%SETUP_DIR%"
+set SCRIPT_PATH=%SETUP_DIR%\\gui_installer.py
+
+powershell -Command "Invoke-WebRequest -Uri '{server_url}/static/agent_setup.py' -OutFile '%SCRIPT_PATH%'" 2>nul
+if not exist "%SCRIPT_PATH%" (
+    echo Downloading setup components...
+    curl -s -o "%SCRIPT_PATH%" "{server_url}/static/agent_setup.py"
+)
+
+!PY_CMD! "%SCRIPT_PATH%" --server="{server_url}" --token="{token}"
+pause
+"""
+            resp = HttpResponse(script, content_type="application/x-bat")
+            resp["Content-Disposition"] = 'attachment; filename="Install-LaptopMon.bat"'
+            return resp
+        else:
+            script = f"""#!/bin/bash
+echo "=========================================================="
+echo "  Laptop Productivity Monitoring - Setup"
+echo "=========================================================="
+SETUP_DIR="$HOME/.laptopmon_setup"
+mkdir -p "$SETUP_DIR"
+curl -s -o "$SETUP_DIR/gui_installer.py" "{server_url}/static/agent_setup.py"
+python3 "$SETUP_DIR/gui_installer.py" --server="{server_url}" --token="{token}"
+"""
+            resp = HttpResponse(script, content_type="text/x-shellscript")
+            resp["Content-Disposition"] = 'attachment; filename="install-laptopmon.sh"'
+            return resp

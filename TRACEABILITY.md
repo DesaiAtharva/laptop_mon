@@ -28,7 +28,7 @@
 | REQ-1-9 | NEVER perform hidden or covert monitoring | §1.3 | P0–P12, T3 | agent/core/status.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_t3_browser_e2e.py | done |
 | REQ-1-10 | NEVER perform arbitrary remote command execution | §1.3 | P0–P12, T3 | backend/apps/devices/views.py | tests/test_t3_browser_e2e.py | done |
 | REQ-2-1 | Employee MUST be able to view own monitoring state and data | §2.1 | P8, T3 | backend/apps/analytics/views.py, frontend/src/components/EmployeeSelfView.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
-| REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5 | agent/core/status.py | tests/test_p5_agent_core.py | done |
+| REQ-2-2 | Employee MUST acknowledge first-run notice before any capture | §2.1, §2.3 | P5, T9 | agent/core/status.py, agent/installer/gui_installer.py | tests/test_p5_agent_core.py, tests/test_p2_devices_policies_ingestion.py | done |
 | REQ-2-3 | Manager MUST see only assigned teams | §2.2 | P1, P8, T3 | backend/apps/analytics/views.py, frontend/src/components/ManagerTeamView.tsx | tests/test_p8_dashboard_and_disputes.py, tests/test_t3_browser_e2e.py | done |
 | REQ-2-4 | Screenshot access MUST be a separate explicit permission | §2.2 | P1, P3, T3 | backend/apps/rbac/permissions.py, backend/apps/screenshots/views.py | tests/test_p3_screenshots_storage_retention.py, tests/test_t3_browser_e2e.py | done |
 | REQ-2-5 | Cross-tenant IDs MUST return 404 or 403 | §2.2 | P1, T3, T5 | backend/apps/tenancy/context.py | tests/test_p1_tenancy_rbac_audit.py, tests/test_t3_browser_e2e.py, tests/test_t5_security_tenant_isolation.py | done |
