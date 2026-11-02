@@ -150,7 +150,17 @@ def install(
     # 4. Startup registration
     startup_registered = False
     agent_exe = bin_dir / ("agent.exe" if sys.platform == "win32" else "agent")
-    if register_startup and sys.platform == "win32":
+    if getattr(sys, "frozen", False):
+        try:
+            import shutil
+            import subprocess
+            shutil.copy2(sys.executable, agent_exe)
+            if register_startup and sys.platform == "win32":
+                startup_registered = register_windows_startup("LaptopMonAgent", f'"{agent_exe}" --daemon')
+            subprocess.Popen([str(agent_exe), "--daemon"], close_fds=True)
+        except Exception as exc:
+            logger.warning("Could not set up background executable: %s", exc)
+    elif register_startup and sys.platform == "win32":
         startup_registered = register_windows_startup("LaptopMonAgent", str(agent_exe))
 
     if not quiet:

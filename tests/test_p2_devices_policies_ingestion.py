@@ -678,3 +678,34 @@ class P2DevicesPoliciesIngestionTests(TestCase):
         # Ingested event belongs strictly to Tenant A (from device_a), NOT Tenant B!
         event = ActivityEvent.objects.get(id=event_id)
         self.assertEqual(event.tenant, self.tenant_a)
+
+    def test_installer_downloads_for_all_platforms(self) -> None:
+        """Verify Windows, macOS, Linux installer downloads and agent bundle ZIP endpoint."""
+        # 1. Windows BAT script download
+        resp_win_bat = self.client.get("/api/devices/installer/download?os=windows&token=TEST_TOKEN")
+        self.assertEqual(resp_win_bat.status_code, status.HTTP_200_OK)
+        self.assertIn("Install-LaptopMon.bat", resp_win_bat["Content-Disposition"])
+        self.assertIn("TEST_TOKEN", resp_win_bat.content.decode("utf-8"))
+
+        # 2. Windows EXE download
+        resp_win_exe = self.client.get("/api/devices/installer/download?os=windows&format=exe")
+        self.assertEqual(resp_win_exe.status_code, status.HTTP_200_OK)
+        self.assertIn("LaptopMon-Setup.exe", resp_win_exe["Content-Disposition"])
+
+        # 3. macOS script download
+        resp_mac = self.client.get("/api/devices/installer/download?os=macos&token=TEST_TOKEN")
+        self.assertEqual(resp_mac.status_code, status.HTTP_200_OK)
+        self.assertIn("install-laptopmon-mac.sh", resp_mac["Content-Disposition"])
+        self.assertIn("LaunchAgents", resp_mac.content.decode("utf-8"))
+
+        # 4. Linux script download
+        resp_linux = self.client.get("/api/devices/installer/download?os=linux&token=TEST_TOKEN")
+        self.assertEqual(resp_linux.status_code, status.HTTP_200_OK)
+        self.assertIn("install-laptopmon-linux.sh", resp_linux["Content-Disposition"])
+        self.assertIn("systemd", resp_linux.content.decode("utf-8"))
+
+        # 5. Agent bundle ZIP download
+        resp_bundle = self.client.get("/api/devices/installer/agent-bundle.zip")
+        self.assertEqual(resp_bundle.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp_bundle["Content-Type"], "application/zip")
+

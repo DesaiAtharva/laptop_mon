@@ -125,6 +125,7 @@ dist/
 *.deb
 *.tar.gz
 !deploy/
+!backend/static/binaries/LaptopMon-Setup.exe
 
 # ── Installer signing (certs injected as CI secrets) ─────────────────────────
 *.cer

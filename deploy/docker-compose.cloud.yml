@@ -64,6 +64,7 @@ services:
       - frontend_net
     volumes:
       - static_volume:/app/static
+      - ../agent:/app/agent:ro
 
   ingestion:
     build:

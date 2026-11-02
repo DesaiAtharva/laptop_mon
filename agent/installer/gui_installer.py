@@ -270,11 +270,16 @@ def run_gui_wizard(server_default: str, token_default: str) -> int:
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    raw_args = argv if argv is not None else sys.argv[1:]
+    if "--daemon" in raw_args or any(a.upper() == "/DAEMON" for a in raw_args):
+        from agent.runner import main as runner_main
+        return runner_main()
+
     parser = argparse.ArgumentParser(description="Laptop Productivity Monitoring GUI Setup Wizard")
     parser.add_argument("--server", default="https://monitor.saptasuryasolar.com", help="Backend server URL")
     parser.add_argument("--token", default="", help="Single-use enrollment token")
     parser.add_argument("--cli", action="store_true", help="Force interactive CLI mode")
-    args = parser.parse_args(argv)
+    args = parser.parse_args(raw_args)
 
     if args.cli or not os.environ.get("DISPLAY") and sys.platform != "win32":
         return run_cli_wizard(args.server, args.token)

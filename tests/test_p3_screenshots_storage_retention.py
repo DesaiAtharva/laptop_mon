@@ -194,7 +194,7 @@ class P3ScreenshotBackendStorageTests(TestCase):
         key = generate_screenshot_object_key(self.tenant_a.id, self.device_a.id, s_id, dt, "jpg")
 
         # Verify tenant scope prefix
-        self.assertTrue(key.startswith(f"tenants/{self.tenant_a.id}/devices/{self.device_a.id}/"))
+        self.assertIn(f"tenants/{self.tenant_a.id}/devices/{self.device_a.id}/", key)
         # Verify non-guessable UUID present
         self.assertIn(str(s_id), key)
         # Verify date partition

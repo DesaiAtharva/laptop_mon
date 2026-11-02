@@ -235,8 +235,8 @@ export const AdminDashboard: React.FC = () => {
 
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <a
-                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=windows`}
-                  download="Install-LaptopMon.bat"
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=windows&format=exe`}
+                  download="LaptopMon-Setup.exe"
                   className="btn btn-primary"
                   style={{
                     display: "inline-flex",
@@ -245,15 +245,16 @@ export const AdminDashboard: React.FC = () => {
                     padding: "10px 18px",
                     fontWeight: 700,
                     textDecoration: "none",
+                    boxShadow: "0 4px 14px rgba(56, 189, 248, 0.3)",
                   }}
                 >
                   <span style={{ fontSize: "1.2rem" }}>🪟</span>
-                  <span>Download Windows One-Click Installer (.bat)</span>
+                  <span>Windows Standalone App (.exe)</span>
                 </a>
 
                 <a
-                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=linux`}
-                  download="install-laptopmon.sh"
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=windows`}
+                  download="Install-LaptopMon.bat"
                   className="btn btn-secondary"
                   style={{
                     display: "inline-flex",
@@ -264,8 +265,42 @@ export const AdminDashboard: React.FC = () => {
                     textDecoration: "none",
                   }}
                 >
-                  <span style={{ fontSize: "1.2rem" }}>🍎 / 🐧</span>
-                  <span>Download macOS / Linux Script (.sh)</span>
+                  <span style={{ fontSize: "1.2rem" }}>⚡</span>
+                  <span>Windows Script (.bat)</span>
+                </a>
+
+                <a
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=macos`}
+                  download="install-laptopmon-mac.sh"
+                  className="btn btn-secondary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>🍎</span>
+                  <span>Apple Mac (MacBook / macOS)</span>
+                </a>
+
+                <a
+                  href={`/api/devices/installer/download?token=${encodeURIComponent(enrollmentToken)}&os=linux`}
+                  download="install-laptopmon-linux.sh"
+                  className="btn btn-secondary"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  <span style={{ fontSize: "1.2rem" }}>🐧</span>
+                  <span>Linux (.deb / Workstations)</span>
                 </a>
               </div>
             </div>

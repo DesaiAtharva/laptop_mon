@@ -169,6 +169,9 @@ class DownloadInstallerScriptView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    def perform_content_negotiation(self, request: Any, force: bool = False) -> tuple[Any, str]:
+        return (None, "")
+
     def get(self, request: Request) -> Any:
         from django.http import HttpResponse
 
@@ -176,19 +179,55 @@ class DownloadInstallerScriptView(APIView):
         target_os = request.query_params.get("os", "windows").lower()
         server_url = request.build_absolute_uri("/").rstrip("/")
 
+        if target_os == "windows" and request.query_params.get("format") == "exe":
+            from django.http import FileResponse, Http404
+            from pathlib import Path
+            from django.conf import settings
+
+            candidates = [
+                Path(settings.BASE_DIR) / "static" / "binaries" / "LaptopMon-Setup.exe",
+                Path(settings.BASE_DIR).parent / "dist" / "LaptopMon-Setup.exe",
+                Path(settings.BASE_DIR) / "dist" / "LaptopMon-Setup.exe",
+            ]
+            for p in candidates:
+                if p.is_file():
+                    return FileResponse(
+                        open(p, "rb"),
+                        content_type="application/vnd.microsoft.portable-executable",
+                        as_attachment=True,
+                        filename="LaptopMon-Setup.exe",
+                    )
+            raise Http404("Standalone Windows binary is currently building or unavailable.")
+
         if target_os == "windows":
             script = f"""@echo off
 setlocal enabledelayedexpansion
-title Laptop Productivity Monitoring - Setup
+title Laptop Productivity Monitoring - Setup Wizard
 
 echo ==========================================================
-echo   Laptop Productivity Monitoring - Setup Wizard
+echo   Laptop Productivity Monitoring - Setup Wizard (Windows)
 echo ==========================================================
 echo.
-echo Connecting to organization server: {server_url}
+echo Connecting to server: {server_url}
 echo.
 
-:: 1. Detect or Install Python
+set INSTALL_DIR=%LOCALAPPDATA%\\LaptopMon
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+
+:: 1. Attempt to download pre-compiled standalone EXE (Tamper-proof, no Python required)
+echo [1/3] Checking for pre-compiled native executable...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try {{ (New-Object Net.WebClient).DownloadFile('{server_url}/api/devices/installer/download?format=exe', '%INSTALL_DIR%\\LaptopMon-Setup.exe'); exit 0 }} catch {{ exit 1 }}" 2>nul
+if exist "%INSTALL_DIR%\\LaptopMon-Setup.exe" (
+    echo [OK] Standalone native executable acquired.
+    echo [2/3] Launching Setup Wizard...
+    start "" "%INSTALL_DIR%\\LaptopMon-Setup.exe" --server "{server_url}" --token "{token}"
+    exit /b 0
+)
+
+:: 2. Fallback: Download agent source bundle and check for Python
+echo [2/3] Downloading agent bundle from cloud...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{server_url}/api/devices/installer/agent-bundle.zip', '%INSTALL_DIR%\\agent.zip'); Expand-Archive -Path '%INSTALL_DIR%\\agent.zip' -DestinationPath '%INSTALL_DIR%' -Force; Remove-Item '%INSTALL_DIR%\\agent.zip' -Force" 2>nul
+
 set PY_CMD=
 python --version >nul 2>&1
 if !errorlevel! equ 0 set PY_CMD=python
@@ -196,48 +235,120 @@ if "!PY_CMD!"=="" (
     python3 --version >nul 2>&1
     if !errorlevel! equ 0 set PY_CMD=python3
 )
-
 if "!PY_CMD!"=="" (
-    echo [INFO] Python not found. Installing Python via Windows Package Manager...
+    echo [INFO] Installing lightweight Python runtime via Windows Package Manager...
     winget install Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
     set PY_CMD=python
 )
 
-:: 2. Download and unpack desktop agent code automatically (No git or code cloning required!)
-set INSTALL_DIR=%LOCALAPPDATA%\\LaptopMon
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
-
-echo Downloading agent setup bundle from cloud...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{server_url}/api/devices/installer/agent-bundle.zip', '%INSTALL_DIR%\\agent.zip'); Expand-Archive -Path '%INSTALL_DIR%\\agent.zip' -DestinationPath '%INSTALL_DIR%' -Force; Remove-Item '%INSTALL_DIR%\\agent.zip' -Force" 2>nul
-
 if not exist "%INSTALL_DIR%\\agent\\installer\\gui_installer.py" (
-    echo [ERROR] Could not unpack setup bundle. Please verify your internet connection.
+    echo [ERROR] Could not unpack setup bundle. Please check your internet connection.
     pause
     exit /b 1
 )
 
-:: 3. Launch the native GUI Setup Wizard
+echo [3/3] Launching Setup Wizard...
 !PY_CMD! "%INSTALL_DIR%\\agent\\installer\\gui_installer.py" --server="{server_url}" --token="{token}"
 pause
 """
             resp = HttpResponse(script, content_type="application/x-bat")
             resp["Content-Disposition"] = 'attachment; filename="Install-LaptopMon.bat"'
             return resp
-        else:
+        elif target_os == "macos":
             script = f"""#!/bin/bash
+set -e
 echo "=========================================================="
-echo "  Laptop Productivity Monitoring - Setup"
+echo "  Laptop Productivity Monitoring - Apple macOS Setup"
 echo "=========================================================="
 INSTALL_DIR="$HOME/.laptopmon"
 mkdir -p "$INSTALL_DIR"
-echo "Downloading agent bundle from {server_url}..."
+
+echo "[1/3] Downloading agent runtime bundle from {server_url}..."
 curl -s -L -o "$INSTALL_DIR/agent.zip" "{server_url}/api/devices/installer/agent-bundle.zip"
 unzip -q -o "$INSTALL_DIR/agent.zip" -d "$INSTALL_DIR"
 rm -f "$INSTALL_DIR/agent.zip"
+
+echo "[2/3] Configuring macOS LaunchAgent for autostart across reboots..."
+PLIST_DIR="$HOME/Library/LaunchAgents"
+mkdir -p "$PLIST_DIR"
+cat << 'EOF' > "$PLIST_DIR/com.laptopmon.agent.plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.laptopmon.agent</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>__INSTALL_DIR__/agent/runner.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>__INSTALL_DIR__/agent.log</string>
+    <key>StandardErrorPath</key>
+    <string>__INSTALL_DIR__/agent.err</string>
+</dict>
+</plist>
+EOF
+sed -i '' "s|__INSTALL_DIR__|$INSTALL_DIR|g" "$PLIST_DIR/com.laptopmon.agent.plist"
+
+echo "[3/3] Launching Native Setup Wizard..."
 python3 "$INSTALL_DIR/agent/installer/gui_installer.py" --server="{server_url}" --token="{token}"
+
+launchctl unload "$PLIST_DIR/com.laptopmon.agent.plist" 2>/dev/null || true
+launchctl load "$PLIST_DIR/com.laptopmon.agent.plist" 2>/dev/null || true
+echo "Setup complete. LaptopMon is running in the background."
 """
             resp = HttpResponse(script, content_type="text/x-shellscript")
-            resp["Content-Disposition"] = 'attachment; filename="install-laptopmon.sh"'
+            resp["Content-Disposition"] = 'attachment; filename="install-laptopmon-mac.sh"'
+            return resp
+        else:
+            # Linux Workstation / Laptop
+            script = f"""#!/bin/bash
+set -e
+echo "=========================================================="
+echo "  Laptop Productivity Monitoring - Linux Workstation Setup"
+echo "=========================================================="
+INSTALL_DIR="$HOME/.laptopmon"
+mkdir -p "$INSTALL_DIR"
+
+echo "[1/3] Downloading agent runtime bundle from {server_url}..."
+curl -s -L -o "$INSTALL_DIR/agent.zip" "{server_url}/api/devices/installer/agent-bundle.zip"
+unzip -q -o "$INSTALL_DIR/agent.zip" -d "$INSTALL_DIR"
+rm -f "$INSTALL_DIR/agent.zip"
+
+echo "[2/3] Configuring systemd user service for background monitoring..."
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+mkdir -p "$SYSTEMD_USER_DIR"
+cat << EOF > "$SYSTEMD_USER_DIR/laptopmon.service"
+[Unit]
+Description=Laptop Productivity Monitoring Agent
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 $INSTALL_DIR/agent/runner.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload 2>/dev/null || true
+systemctl --user enable laptopmon.service 2>/dev/null || true
+
+echo "[3/3] Launching Setup Wizard..."
+python3 "$INSTALL_DIR/agent/installer/gui_installer.py" --server="{server_url}" --token="{token}"
+systemctl --user start laptopmon.service 2>/dev/null || true
+echo "Setup complete. LaptopMon is running as a systemd user service."
+"""
+            resp = HttpResponse(script, content_type="text/x-shellscript")
+            resp["Content-Disposition"] = 'attachment; filename="install-laptopmon-linux.sh"'
             return resp
 
 
@@ -245,6 +356,9 @@ class AgentBundleDownloadView(APIView):
     """Serve the complete desktop agent code bundle as a lightweight zip file."""
 
     permission_classes = [permissions.AllowAny]
+
+    def perform_content_negotiation(self, request: Any, force: bool = False) -> tuple[Any, str]:
+        return (None, "")
 
     def get(self, request: Request) -> Any:
         import io
