@@ -188,7 +188,7 @@ echo.
 echo Connecting to organization server: {server_url}
 echo.
 
-:: Detect Python
+:: 1. Detect or Install Python
 set PY_CMD=
 python --version >nul 2>&1
 if !errorlevel! equ 0 set PY_CMD=python
@@ -198,23 +198,26 @@ if "!PY_CMD!"=="" (
 )
 
 if "!PY_CMD!"=="" (
-    echo [NOTICE] Python is not installed. Attempting automatic installation via Windows Package Manager...
+    echo [INFO] Python not found. Installing Python via Windows Package Manager...
     winget install Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
     set PY_CMD=python
 )
 
-:: Download and run GUI setup wizard
-set SETUP_DIR=%LOCALAPPDATA%\\LaptopMonSetup
-if not exist "%SETUP_DIR%" mkdir "%SETUP_DIR%"
-set SCRIPT_PATH=%SETUP_DIR%\\gui_installer.py
+:: 2. Download and unpack desktop agent code automatically (No git or code cloning required!)
+set INSTALL_DIR=%LOCALAPPDATA%\\LaptopMon
+if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
-powershell -Command "Invoke-WebRequest -Uri '{server_url}/static/agent_setup.py' -OutFile '%SCRIPT_PATH%'" 2>nul
-if not exist "%SCRIPT_PATH%" (
-    echo Downloading setup components...
-    curl -s -o "%SCRIPT_PATH%" "{server_url}/static/agent_setup.py"
+echo Downloading agent setup bundle from cloud...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{server_url}/api/devices/installer/agent-bundle.zip', '%INSTALL_DIR%\\agent.zip'); Expand-Archive -Path '%INSTALL_DIR%\\agent.zip' -DestinationPath '%INSTALL_DIR%' -Force; Remove-Item '%INSTALL_DIR%\\agent.zip' -Force" 2>nul
+
+if not exist "%INSTALL_DIR%\\agent\\installer\\gui_installer.py" (
+    echo [ERROR] Could not unpack setup bundle. Please verify your internet connection.
+    pause
+    exit /b 1
 )
 
-!PY_CMD! "%SCRIPT_PATH%" --server="{server_url}" --token="{token}"
+:: 3. Launch the native GUI Setup Wizard
+!PY_CMD! "%INSTALL_DIR%\\agent\\installer\\gui_installer.py" --server="{server_url}" --token="{token}"
 pause
 """
             resp = HttpResponse(script, content_type="application/x-bat")
@@ -225,11 +228,49 @@ pause
 echo "=========================================================="
 echo "  Laptop Productivity Monitoring - Setup"
 echo "=========================================================="
-SETUP_DIR="$HOME/.laptopmon_setup"
-mkdir -p "$SETUP_DIR"
-curl -s -o "$SETUP_DIR/gui_installer.py" "{server_url}/static/agent_setup.py"
-python3 "$SETUP_DIR/gui_installer.py" --server="{server_url}" --token="{token}"
+INSTALL_DIR="$HOME/.laptopmon"
+mkdir -p "$INSTALL_DIR"
+echo "Downloading agent bundle from {server_url}..."
+curl -s -L -o "$INSTALL_DIR/agent.zip" "{server_url}/api/devices/installer/agent-bundle.zip"
+unzip -q -o "$INSTALL_DIR/agent.zip" -d "$INSTALL_DIR"
+rm -f "$INSTALL_DIR/agent.zip"
+python3 "$INSTALL_DIR/agent/installer/gui_installer.py" --server="{server_url}" --token="{token}"
 """
             resp = HttpResponse(script, content_type="text/x-shellscript")
             resp["Content-Disposition"] = 'attachment; filename="install-laptopmon.sh"'
             return resp
+
+
+class AgentBundleDownloadView(APIView):
+    """Serve the complete desktop agent code bundle as a lightweight zip file."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request: Request) -> Any:
+        import io
+        import os
+        import zipfile
+        from pathlib import Path
+        from django.conf import settings
+        from django.http import HttpResponse
+
+        # Locate agent directory in repo root
+        agent_root = Path(settings.BASE_DIR).parent / "agent"
+        if not agent_root.exists():
+            agent_root = Path(settings.BASE_DIR) / "agent"
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            for root_dir, dirs, files in os.walk(agent_root):
+                dirs[:] = [d for d in dirs if d not in ("__pycache__", "tests", ".pytest_cache")]
+                for file_name in files:
+                    if file_name.endswith((".pyc", ".pyo")):
+                        continue
+                    file_path = Path(root_dir) / file_name
+                    arcname = "agent/" + str(file_path.relative_to(agent_root)).replace("\\", "/")
+                    zf.write(file_path, arcname=arcname)
+
+        buf.seek(0)
+        resp = HttpResponse(buf.getvalue(), content_type="application/zip")
+        resp["Content-Disposition"] = 'attachment; filename="laptop-mon-agent.zip"'
+        return resp
